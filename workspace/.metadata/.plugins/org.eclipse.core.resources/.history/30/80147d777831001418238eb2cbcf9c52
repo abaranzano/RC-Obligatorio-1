@@ -1,0 +1,41 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
+class Client { 
+	public static void main(String args[]) throws Exception 
+	{ 
+
+		Socket socket = new Socket("www.google.com", 80);
+
+		BufferedWriter out = new BufferedWriter(
+				new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
+		BufferedReader in = new BufferedReader(
+				new InputStreamReader(socket.getInputStream()));
+		
+		// Creo el HTTP GET de prueba
+		System.out.println(" * Request");
+
+		out.write("GET /intl/en/policies/privacy/ HTTP/1.1\r\n");
+		out.write("\r\n");
+		out.flush();
+		
+		// Leo el HTTP Response y lo imprimo
+		System.out.println("\n * Response");
+
+		String line;
+		while ((line = in.readLine()) != null) {
+			System.out.println(line);
+		}
+		
+		out.close();
+		in.close();
+	}
+} 
