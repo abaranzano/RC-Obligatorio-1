@@ -1,40 +1,75 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.UnknownHostException;
 
 class Client { 
-	public static void main(String args[]) throws Exception 
-	{ 
 
-		Socket socket = new Socket("www.google.com", 80);
-
-		BufferedWriter out = new BufferedWriter(
-				new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
-		BufferedReader in = new BufferedReader(
-				new InputStreamReader(socket.getInputStream()));
-		
-		// Creo el HTTP GET de prueba
-		out.write("GET /intl/en/policies/privacy/ HTTP/1.1\r\n");
-		out.write("\r\n");
-		//Esto manda los caracteres al stream. Al ser este el stream de un socket, lo que hace es enviar el mensaje
-		out.flush();
-		
-		// Leo el HTTP Response y lo imprimo
-		System.out.println("\n * Response");
-
-		String line;
-		//El in.readLine, lee una linea del buffer, como el stream es de un socket, si no mande un mensaje, se va a quedar esperando hasta recibirlo en vez de decir q es nulo
-		while ((line = in.readLine()) != null) {
-			System.out.println(line);
+	String host = null;
+	String path = null;
+	int port = 80;
+	Socket socket = null;
+	BufferedWriter out = null;
+	BufferedReader in = null;
+	Descriptor descriptor = null;
+	
+	public Client (String url, int port, Descriptor d) throws UnknownHostException, IOException {
+		int pos = url.indexOf("/");
+		if (pos != -1) {
+			this.host = url.substring(0, pos);
+			this.path = url.substring(pos, url.length());
+		} else {
+			this.host = url;
+			this.path = "/";
 		}
 		
+		this.port = port;
+		this.socket = new Socket(host, port);
+		this.descriptor = d;
+	}
+	
+	
+	public void HTTPGet() throws UnsupportedEncodingException, IOException {
+		out = new BufferedWriter(
+				new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
+		String httpGet = "GET " + this.path;
+		if (Descriptor.isHTTP11) {
+			httpGet += " HTTP/1.1\r\n";
+		} else {
+			httpGet += " HTTP/1.0\r\n";
+		}
+		httpGet += "\r\n";
+		out.write(httpGet);
+		
+		System.out.println("\n HTTP Get Message: ");
+		System.out.println(httpGet);
+		
+		out.flush();
+		
+	}
+	
+	public String HTTPResponse() throws IOException {
+		in = new BufferedReader(
+				new InputStreamReader(socket.getInputStream()));
+		String line;
+		
+		System.out.println("\n HTTP Response Message: ");
+		String response = null;
+		while ((line = in.readLine()) != null) {
+			response += line;
+			System.out.println(line);
+		}		
+		
+		descriptor.addLink(response); //Solo quiero probar que funque la estructura
+		descriptor.addMail(response);
+		return response;
+	}
+
+	public void close() throws IOException {
 		out.close();
 		in.close();
 	}
