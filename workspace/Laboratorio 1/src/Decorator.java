@@ -22,13 +22,16 @@ public class Decorator implements Runnable {
 
 		if (urlAProcesar != null) {
 			try {
+				if (!(this.descriptor.links.containsKey(urlAProcesar))) {
 				//TODO: Las URL tienen que tener http:// y esas cosas sino el new URL da excepcion
 				URL url = new URL (urlAProcesar);
 				//TODO: Chequear que la url.getPath() de el camino correcto completo, fijarse si tiene alguna variable o referencia (estilo ?name=algo o #Ref) 
 				this.worker = new Worker(url.getHost(), url.getPort(), url.getPath());
 				worker.setDescriptor(this.descriptor);
 				worker.doJob();
-
+				} else {
+					//TODO: Encontre un ciclo
+				}
 			} catch (MalformedURLException e) {
 				System.err.println("Error. La url a procesar no tiene un protocolo válido. Error Original: " + e.getMessage());
 			} catch (IOException e) {
