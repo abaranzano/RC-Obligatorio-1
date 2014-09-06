@@ -23,12 +23,21 @@ public class Decorator implements Runnable {
 		if (urlAProcesar != null) {
 			try {
 				if (!(this.descriptor.links.containsKey(urlAProcesar))) {
-				//TODO: Las URL tienen que tener http:// y esas cosas sino el new URL da excepcion
-				URL url = new URL (urlAProcesar);
-				//TODO: Chequear que la url.getPath() de el camino correcto completo, fijarse si tiene alguna variable o referencia (estilo ?name=algo o #Ref) 
-				this.worker = new Worker(url.getHost(), url.getPort(), url.getPath());
-				worker.setDescriptor(this.descriptor);
-				worker.doJob();
+					//TODO: Las URL tienen que tener http:// y esas cosas sino el new URL da excepcion
+					URL url = null;
+					String path = null;
+							if (this.descriptor.isUsesProxy()) {
+								url = new URL(this.descriptor.getProxy());
+								path = urlAProcesar;
+							} else {
+								url = new URL (urlAProcesar);
+								path = url.getPath();
+							}
+
+					//TODO: Chequear que la url.getPath() de el camino correcto completo, fijarse si tiene alguna variable o referencia (estilo ?name=algo o #Ref) 
+					this.worker = new Worker(url.getHost(), url.getPort(), path);
+					worker.setDescriptor(this.descriptor);
+					worker.doJob();
 				} else {
 					//TODO: Encontre un ciclo
 				}

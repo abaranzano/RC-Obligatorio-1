@@ -17,13 +17,16 @@ class Worker {
 	BufferedReader in = null;
 	Descriptor descriptor = null;
 
-	public Worker (String host, int port, String path) throws IOException {
+	public Worker (String host, int port, String path) {
 		
 		this.host = host;		
 		if (port != -1) {
 			this.port = port;
 		}
 		this.path = path;
+	}
+
+	public void abrirSocket() throws IOException  {
 		try {
 			this.socket = new Socket(this.host, this.port);
 		} catch (UnknownHostException e) {
@@ -32,7 +35,6 @@ class Worker {
 			System.err.println("Error. El puerto:[" + this.port + "] es inválido.");
 		}
 	}
-
 
 	public Descriptor getDescriptor() {
 		return descriptor;
@@ -43,6 +45,7 @@ class Worker {
 	}
 
 	public void doJob() throws UnsupportedEncodingException, IOException {
+		abrirSocket();
 		HTTPGet();
 		String response = HTTPResponse();
 		close();

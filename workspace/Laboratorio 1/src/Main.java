@@ -16,8 +16,7 @@ public class Main {
         
 		boolean salir = false;
 		int cantidadHilos = 1;
-		String urlInicial = "http://www.google.com/doodles";
-        
+	        
         //nombre del switch, tiene argumentos?, descripcion   
         options.addOption("d", false, "debug");
         options.addOption("depth", true, "profundidad");
@@ -29,12 +28,17 @@ public class Main {
         
         //Para llamarlo seria por ejemplo asi: redbot -pozos 5 -d www.google.com. 
         //Para obtener el 5 del switch pozos asi: cmdLine.getOptionValue("pozos")
-        
+        Descriptor descriptor = new Descriptor();
         try {  
             //Parseamos la entrada con la configuración establecida    
          
              parser  = new BasicParser();  
              cmdLine = parser.parse(options, args);             
+             if (cmdLine.getArgs().length != 0) {
+            	 descriptor.agregarURL(cmdLine.getArgs()[0]);
+             } else {
+            	 System.err.println("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
+             }
              
              if (cmdLine.hasOption("d"))
              	JOptionPane.showMessageDialog(null, "Tiene debug");
@@ -45,21 +49,22 @@ public class Main {
              if(cmdLine.hasOption("p")) {
             	 cantidadHilos = Integer.valueOf(cmdLine.getOptionValue("p"));
              }
-               
-             if (cmdLine.getArgs().length != 0) {
-            	 urlInicial = cmdLine.getArgs()[0];
-             } else {
-            	 System.err.println("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
+             if (cmdLine.hasOption("prx")) {
+            	 descriptor.setUsesProxy(true);
+            	 String proxy = cmdLine.getOptionValue("prx");
+            	 if (proxy.startsWith("http://")) {
+            		 descriptor.setProxy(proxy);
+            	 } else {
+            		 descriptor.setProxy("http://" + proxy);
+            	 }            	 
              }
+             
          } catch (org.apache.commons.cli.ParseException ex){  
-             System.err.println(ex.getMessage());  
-                
+             System.err.println(ex.getMessage());                  
          }  
         
-        
-        
 
-		Descriptor descriptor = new Descriptor(urlInicial);
+		
 		
 		//Agrego más links antes de prueba para ver si toma uno cada hilo
 //		descriptor.aProcesar.add("http://www.fing.edu.uy/inco/cursos/compil/");
