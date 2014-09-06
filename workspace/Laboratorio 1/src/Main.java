@@ -1,8 +1,48 @@
+import javax.swing.JOptionPane;
+
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+
 
 public class Main {
 
 	public static void main(String args[]) throws Exception 
 	{ 
+        CommandLineParser parser  = null;  
+        CommandLine       cmdLine = null; 
+        
+        //nombre del switch, tiene argumentos?, descripcion   
+        options.addOption("d", false, "debug");
+        options.addOption("depth", true, "profundidad");
+        options.addOption("persistent", false, "protocolo");
+        options.addOption("pozos", true, "pozos");
+        options.addOption("multilang", true, "multilang");
+        options.addOption("p", true, "hilos");
+        options.addOption("prx", true, "proxy");
+        
+        //Para llamarlo seria por ejemplo asi: redbot -pozos 5 -d www.google.com. 
+        //Para obtener el 5 del switch pozos asi: cmdLine.getOptionValue("pozos")
+        
+        try {  
+            //Parseamos la entrada con la configuración establecida    
+         
+             parser  = new BasicParser();  
+             cmdLine = parser.parse(options, args);             
+             
+             if (cmdLine.hasOption("d"))
+             	JOptionPane.showMessageDialog(null, "Tiene debug");
+             
+             if (cmdLine.hasOption("pozos"))
+             	JOptionPane.showMessageDialog(null, "tiene pozos " + "arg " + cmdLine.getOptionValue("pozos"));
+               
+         } catch (org.apache.commons.cli.ParseException ex){  
+             System.out.println(ex.getMessage());  
+                
+         }  
+        
+        
+        
 		boolean salir = false;
 		int cantidadHilos = 5;
 		String urlInicial = "http://www.google.com/doodles";
