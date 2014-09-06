@@ -1,5 +1,7 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -59,16 +61,28 @@ class Worker {
 				new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
 		String httpGet = "GET " + this.path;
 		if (getDescriptor().isHTTP11()) {
-			httpGet += " HTTP/1.1\r\n";
+			httpGet += " HTTP/1.1";
 		} else {
-			httpGet += " HTTP/1.0\r\n";
+			httpGet += " HTTP/1.0";
 		}
 		httpGet += "\r\n";
+		
+		httpGet +="Accept: text/plain, text/html, text/*\r\n";
+		httpGet +="Host: " + host + ":" + port + "\r\n";
+		httpGet +="\r\n";
+		
+		//httpGet += "\n";
+		
 		out.write(httpGet);
 
-		System.out.println("\n HTTP Get Message: ");
+		System.out.println("Se envio el siguiente mensaje: " );
 		System.out.println(httpGet);
-
+		System.out.println("Fin del mensaje");
+		System.out.println("HTTP Get Message: ");
+		System.out.println(httpGet);
+		
+		
+		
 		out.flush();
 
 	}
@@ -81,10 +95,20 @@ class Worker {
 		System.out.println("\n HTTP Response Message: ");
 		String response = null;
 		while ((line = in.readLine()) != null) {
-			response += line;
-			System.out.println(line);
+			response += line + "\n";
+			//System.out.println(line);
 		}		
 
+		//creo un archivo que ocntiene el responde de la pag
+		//el archivo queda almacenado en la carpeta Labratorio 1 del proyecto con nombre archivo, el nombre del host procesado
+		File archivo=new File(host + ".txt");
+		FileWriter escribir=new FileWriter(archivo,true);
+		//Escribimos en el archivo con el metodo write
+		escribir.write(response);
+		//Cerramos la conexion
+		escribir.close();
+				
+	    System.out.println(response);
 		return response;
 	}
 
