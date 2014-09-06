@@ -8,6 +8,13 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.swing.JOptionPane;
 
 class Worker { 
 
@@ -93,7 +100,7 @@ class Worker {
 		String line;
 
 		System.out.println("\n HTTP Response Message: ");
-		String response = null;
+		String response = ""; 	//Con null concatena un null adelante
 		while ((line = in.readLine()) != null) {
 			response += line + "\n";
 			//System.out.println(line);
@@ -117,9 +124,37 @@ class Worker {
 		in.close();
 	}
 
+	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
+			Pattern.compile("[-\\w\\.]+@[\\.\\w]+\\.\\w+", Pattern.CASE_INSENSITIVE);
+
+	 List<String> getEmails(String TextHTML) {
+		         
+				Pattern p = VALID_EMAIL_ADDRESS_REGEX;
+				List<String> emails = new ArrayList<String>();
+		        Matcher matcher = p.matcher(TextHTML);
+				while (matcher.find()) {
+					emails.add(matcher.group());
+				}
+		        return emails;
+		}
+		
 	public void procesarRespuesta(String response) {
 		//TODO: Procesar la respuesta bien.
+		String statusCode = response.substring(9,12);
+		JOptionPane.showMessageDialog(null, statusCode);
+		int indiceContentType = 0;
+		indiceContentType = response.indexOf("Content-Type");
+		
+		String contenttype = response.substring(indiceContentType + 14, indiceContentType + 23);
+		if(contenttype.equals("text/html"))
+			JOptionPane.showMessageDialog(null, contenttype);
+		
 		getDescriptor().addLink(response); //Solo quiero probar que funque la estructura
-		getDescriptor().addMail(response);
+		Iterator<String> iter = getEmails(response).iterator();
+		while(iter.hasNext()){
+			//JOptionPane.showMessageDialog(null, iter.next());
+			this.descriptor.addMail(iter.next());
+		}
+		
 	}
 } 
