@@ -14,6 +14,10 @@ public class Main {
         CommandLine       cmdLine = null; 
         Options options = new Options();
         
+		boolean salir = false;
+		int cantidadHilos = 1;
+		String urlInicial = "http://www.google.com/doodles";
+        
         //nombre del switch, tiene argumentos?, descripcion   
         options.addOption("d", false, "debug");
         options.addOption("depth", true, "profundidad");
@@ -37,17 +41,24 @@ public class Main {
              
              if (cmdLine.hasOption("pozos"))
              	JOptionPane.showMessageDialog(null, "tiene pozos " + "arg " + cmdLine.getOptionValue("pozos"));
+             
+             if(cmdLine.hasOption("p")) {
+            	 cantidadHilos = Integer.valueOf(cmdLine.getOptionValue("p"));
+             }
                
+             if (cmdLine.getArgs().length != 0) {
+            	 urlInicial = cmdLine.getArgs()[0];
+             } else {
+            	 System.err.println("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
+             }
          } catch (org.apache.commons.cli.ParseException ex){  
-             System.out.println(ex.getMessage());  
+             System.err.println(ex.getMessage());  
                 
          }  
         
         
         
-		boolean salir = false;
-		int cantidadHilos = 5;
-		String urlInicial = "http://www.google.com/doodles";
+
 		Descriptor descriptor = new Descriptor(urlInicial);
 		
 		//Agrego más links antes de prueba para ver si toma uno cada hilo
