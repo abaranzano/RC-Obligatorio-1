@@ -3,6 +3,7 @@ import javax.swing.JOptionPane;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.Options;
 
 
 public class Main {
@@ -11,6 +12,7 @@ public class Main {
 	{ 
         CommandLineParser parser  = null;  
         CommandLine       cmdLine = null; 
+        Options options = new Options();
         
         //nombre del switch, tiene argumentos?, descripcion   
         options.addOption("d", false, "debug");
