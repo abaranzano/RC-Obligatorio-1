@@ -40,11 +40,36 @@ public class Main {
             	 System.err.println("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
              }
              
-             if (cmdLine.hasOption("d"))
-             	JOptionPane.showMessageDialog(null, "Tiene debug");
+             if(cmdLine.hasOption("d")){
+             	descriptor.setDebug();		//Setea en true el debug del descriptor
+             }
              
-             if (cmdLine.hasOption("pozos"))
-             	JOptionPane.showMessageDialog(null, "tiene pozos " + "arg " + cmdLine.getOptionValue("pozos"));
+             if(cmdLine.hasOption("depth")){
+            	 descriptor.setProfundidadMaxima(Integer.parseInt(cmdLine.getOptionValue("depth")));
+             }
+             
+             if(cmdLine.hasOption("persistent")){
+            	 descriptor.setHTTP11(true);
+             }
+             
+             if(cmdLine.hasOption("pozos")){
+             	descriptor.setPozo();
+             	descriptor.setFilePozo(cmdLine.getOptionValue("pozos"));
+             }	
+             
+             if(cmdLine.hasOption("multilang")){
+            	 descriptor.setMultilang();
+            	 descriptor.setFileMultilang(cmdLine.getOptionValue("multilang"));
+             }
+             
+             if(cmdLine.hasOption("p")){
+            	 //TODO
+             }
+             
+             if(cmdLine.hasOption("prx")){
+            	 descriptor.setUsesProxy(true);
+            	 descriptor.setProxy(cmdLine.getOptionValue("prx"));
+             }
              
              if(cmdLine.hasOption("p")) {
             	 cantidadHilos = Integer.valueOf(cmdLine.getOptionValue("p"));
@@ -64,8 +89,6 @@ public class Main {
          }  
         
 
-		
-		
 		//Agrego más links antes de prueba para ver si toma uno cada hilo
 //		descriptor.aProcesar.add("http://www.fing.edu.uy/inco/cursos/compil/");
 //		descriptor.aProcesar.add("http://www.fing.edu.uy/inco/inicio");

@@ -8,7 +8,12 @@ public class Descriptor {
 	public boolean HTTP11 = false;
 	public boolean usesProxy = false;
 	public String proxy = null;
+	public boolean usesDebug = false;
 	public int profundidadMaxima = 1;
+	private boolean usesPozos = false;
+	private String filePozos;
+	private boolean usesMultilang = false;
+	private String fileMultilang;
 	public int canthijosAProcesar = 2; //esto despues sw puede ir
 	public HashMap<String, String> links = null;
 	public List<String> mails = null;
@@ -44,7 +49,7 @@ public class Descriptor {
 		Pair ret = null;
 		if (aProcesar.size() > 0) {
 			if (profundidadMaxima != -1) {
-				if (aProcesar.get(0).depth < profundidadMaxima) {
+				if (aProcesar.get(0).getDepth() < profundidadMaxima) {
 					ret = aProcesar.get(0);
 					aProcesar.remove(0);
 				}
@@ -90,5 +95,43 @@ public class Descriptor {
 		this.proxy = proxy;
 	}
 
+	public boolean usesDebug(){
+		return this.usesDebug;
+	}
+	
+	public void setDebug(){
+		this.usesDebug = true;
+	}
 
+	public boolean getPozo(){
+		return this.usesPozos;
+	}
+	
+	public void setPozo(){
+		this.usesPozos = true;
+	}
+	
+	public String getFilePozo(){
+		return this.filePozos;
+	}
+	
+	public void setFilePozo(String path){
+		this.filePozos = path;
+	}
+	
+	public boolean getMultilang(){
+		return this.usesMultilang;
+	}
+	
+	public void setMultilang(){
+		this.usesMultilang = true;
+	}
+	
+	public String getFileMultilang(){
+		return this.fileMultilang;
+	}
+	
+	public void setFileMultilang(String path){
+		this.fileMultilang = path;
+	}
 }
