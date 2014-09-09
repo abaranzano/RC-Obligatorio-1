@@ -13,6 +13,8 @@ public class Descriptor {
 	private HashMap<String, String> links = null;
 	private List<String> mails = null;
 	private List<Pair<Integer, String>> aProcesar = null;
+	private int cantHilos = 1;
+	private int cantHilosFinalizados = 0;
 
 	public Descriptor() {
 		this.links = new HashMap<String,String>();
@@ -66,7 +68,7 @@ public class Descriptor {
 		this.HTTP11 = hTTP11;
 	}
 
-	
+
 
 	public void setProfundidadMaxima(int profundidadMaxima) {
 		this.profundidadMaxima = profundidadMaxima;
@@ -87,34 +89,58 @@ public class Descriptor {
 	public boolean getHTTP11(){
 		return this.HTTP11;
 	}
-	
+
 	public boolean getusesProxy(){
 		return this.usesProxy;
 	}
-	
+
 	public String getProxy(){
 		return this.proxy;
 	}
-	
+
 	public int getProfundidadMaxima(){
 		return this.profundidadMaxima;
 	}
-	
+
 	public int getCanthijosAProcesar(){
 		return this.canthijosAProcesar;
 	}
-	
+
 	public HashMap<String, String> getLinks(){
 		return this.links;
 	}
-	
+
 	public List<String> getMails(){
 		return this.mails;
 	}
-	 
+
 	public List<Pair<Integer, String>> getAProcesar(){
 		return this.aProcesar;
 	}
 
+	public int getCantHilos() {
+		return cantHilos;
+	}
+
+	public void setCantHilos(int cantHilos) {
+		this.cantHilos = cantHilos;
+		this.cantHilosFinalizados = cantHilos; //Arranca con la cantidad de hilos xq al revivir le resto.
+	}
+
+	public synchronized void finalizo() {
+		this.cantHilosFinalizados++;
+	}
+
+	public synchronized void revivo() {
+		this.cantHilosFinalizados--;
+	}
+	
+	public synchronized int estadoHilos() {
+		return this.cantHilosFinalizados;
+	}
+
+	public synchronized int getCantidadDatosAProcesar() {
+		return this.aProcesar.size();
+	}
 
 }

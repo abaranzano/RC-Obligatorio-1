@@ -70,10 +70,10 @@ public class Main {
 //		descriptor.aProcesar.add("http://www.fing.edu.uy/inco/cursos/compil/");
 //		descriptor.aProcesar.add("http://www.fing.edu.uy/inco/inicio");
 		Thread[] t = new Thread[cantidadHilos];
-		
+		descriptor.setCantHilos(cantidadHilos);
 		int cuantasvecesbusque = 0;
-		while (!salir) {
-			cuantasvecesbusque ++;
+//		while (!salir) {
+
 			
 			/*
 			 * Recreo hilos cada vez que los 5 terminan de procesar una URL.
@@ -99,13 +99,13 @@ public class Main {
 			} catch (InterruptedException e) {
 				System.err.println("Error al esperar por el fin de un hilo. Error Original: " + e.getMessage());
 			}
-			if (descriptor.getAProcesar().size() == 0) {
-				//Terminaron todos los hilos y no quedan urls por procesar.
-				salir = true;
-			}
-		}
+//			if (descriptor.getAProcesar().size() == 0) {
+//				//Terminaron todos los hilos y no quedan urls por procesar.
+//				salir = true;
+//			}
+//		}
 		
-		System.out.println("Cuantas quise procesar: " + cuantasvecesbusque);
+
 		
 	}
 
