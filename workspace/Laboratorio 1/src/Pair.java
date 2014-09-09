@@ -1,8 +1,8 @@
 
 public class Pair<Integer, String> {
 	
-	public Integer depth;
-	public String url;
+	private Integer depth;
+	private String url;
 	
 	Pair(Integer depth, String url) {
 		this.depth = depth;

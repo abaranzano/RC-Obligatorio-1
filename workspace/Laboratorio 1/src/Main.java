@@ -99,7 +99,7 @@ public class Main {
 			} catch (InterruptedException e) {
 				System.err.println("Error al esperar por el fin de un hilo. Error Original: " + e.getMessage());
 			}
-			if (descriptor.aProcesar.size() == 0) {
+			if (descriptor.getAProcesar().size() == 0) {
 				//Terminaron todos los hilos y no quedan urls por procesar.
 				salir = true;
 			}
