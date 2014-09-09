@@ -48,7 +48,7 @@ public class Descriptor {
 	}
 
 	public synchronized Pair<Integer, String> getData() {
-		Pair ret = null;
+		Pair<Integer, String> ret = null;
 		if (aProcesar.size() > 0) {
 			if (profundidadMaxima != -1) {
 				if (aProcesar.get(0).getDepth() < profundidadMaxima) {

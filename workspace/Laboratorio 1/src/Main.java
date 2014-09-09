@@ -1,5 +1,3 @@
-import javax.swing.JOptionPane;
-
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -14,7 +12,7 @@ public class Main {
         CommandLine       cmdLine = null; 
         Options options = new Options();
         
-		boolean salir = false;
+//		boolean salir = false;
 		int cantidadHilos = 1;
 	        
         //nombre del switch, tiene argumentos?, descripcion   
@@ -94,7 +92,7 @@ public class Main {
 //		descriptor.aProcesar.add("http://www.fing.edu.uy/inco/inicio");
 		Thread[] t = new Thread[cantidadHilos];
 		descriptor.setCantHilos(cantidadHilos);
-		int cuantasvecesbusque = 0;
+
 //		while (!salir) {
 
 			
