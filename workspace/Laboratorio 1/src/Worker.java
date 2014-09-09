@@ -17,8 +17,6 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.JOptionPane;
-
 class Worker { 
 
 	private String host = null;
