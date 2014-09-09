@@ -95,7 +95,7 @@ public class Descriptor {
 		return this.HTTP11;
 	}
 
-	public boolean getusesProxy(){
+	public boolean getUsesProxy(){
 		return this.usesProxy;
 	}
 

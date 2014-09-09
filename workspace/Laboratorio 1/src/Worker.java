@@ -35,12 +35,20 @@ class Worker {
 
 	public void abrirSocket() throws IOException  {
 		try {
-			URL url = new URL(urlAProcesar.getUrl());
+			URL url = null;
+			if (this.descriptor.getUsesProxy()) {
+				url = new URL(this.descriptor.getProxy());
+				this.path = urlAProcesar.getUrl();
+			} else {
+				url = new URL(urlAProcesar.getUrl());
+				this.path = url.getPath();
+			}
+
 			this.host = url.getHost();
 			if (url.getPort() != -1) {
 				this.port = url.getPort();
 			}
-			this.path = url.getPath();
+
 			this.socket = new Socket(this.host, this.port);
 		} catch (MalformedURLException e) {
 			System.err.println("Error. La url a procesar no tiene un protocolo válido. Error Original: " + e.getMessage());
@@ -63,7 +71,8 @@ class Worker {
 		abrirSocket();
 		HTTPGet();
 		String response = HTTPResponse();
-		close();
+		close(); //Cierro solo si no uso
+
 		//Cierro el Socket antes de procesar la respuesta. No hay necesidad de mantenerlo abierto.
 		procesarRespuesta(response);
 
@@ -198,6 +207,6 @@ class Worker {
 		if (this.descriptor.usesDebug()){
 			System.out.println("DEBUG: url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
 		}
-			
+
 	}
 } 
