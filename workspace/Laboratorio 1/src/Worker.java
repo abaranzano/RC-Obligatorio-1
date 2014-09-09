@@ -21,15 +21,15 @@ import javax.swing.JOptionPane;
 
 class Worker { 
 
-	String host = null;
-	Pair<Integer,String> urlAProcesar;
+	private String host = null;
+	private Pair<Integer,String> urlAProcesar;
 
-	String path = null;
-	int port = 80;
-	Socket socket = null;
-	BufferedWriter out = null;
-	BufferedReader in = null;
-	Descriptor descriptor = null;
+	private String path = null;
+	private int port = 80;
+	private Socket socket = null;
+	private BufferedWriter out = null;
+	private BufferedReader in = null;
+	private Descriptor descriptor = null;
 
 	public Worker (Pair<Integer, String> actual) {
 		this.urlAProcesar = actual;
@@ -179,8 +179,8 @@ class Worker {
 		Vector<HtmlLink> links = htmlExtractor.grabHTMLLinks(response);
 
 		int cantLiknks = links.size();
-		if (this.descriptor.canthijosAProcesar != -1){
-			cantLiknks = this.descriptor.canthijosAProcesar;
+		if (this.descriptor.getCanthijosAProcesar() != -1){
+			cantLiknks = this.descriptor.getCanthijosAProcesar();
 		}
 
 		for (int i = 0; i <cantLiknks; i++){

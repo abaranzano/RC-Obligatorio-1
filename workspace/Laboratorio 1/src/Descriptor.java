@@ -5,19 +5,19 @@ import java.util.List;
 
 public class Descriptor {
 
-	public boolean HTTP11 = false;
-	public boolean usesProxy = false;
-	public String proxy = null;
+	private boolean HTTP11 = false;
+	private boolean usesProxy = false;
+	private String proxy = null;
+	private int profundidadMaxima = 1;
+	private int canthijosAProcesar = 2; //esto despues sw puede ir
+	private HashMap<String, String> links = null;
+	private List<String> mails = null;
+	private List<Pair<Integer, String>> aProcesar = null;	
 	public boolean usesDebug = false;
-	public int profundidadMaxima = 1;
 	private boolean usesPozos = false;
 	private String filePozos;
 	private boolean usesMultilang = false;
 	private String fileMultilang;
-	public int canthijosAProcesar = 2; //esto despues sw puede ir
-	public HashMap<String, String> links = null;
-	public List<String> mails = null;
-	public List<Pair<Integer, String>> aProcesar = null;
 
 	public Descriptor() {
 		this.links = new HashMap<String,String>();
@@ -71,9 +71,7 @@ public class Descriptor {
 		this.HTTP11 = hTTP11;
 	}
 
-	public int getProfundidadMaxima() {
-		return profundidadMaxima;
-	}
+	
 
 	public void setProfundidadMaxima(int profundidadMaxima) {
 		this.profundidadMaxima = profundidadMaxima;
@@ -87,12 +85,40 @@ public class Descriptor {
 		this.usesProxy = usesProxy;
 	}
 
-	public String getProxy() {
-		return proxy;
-	}
 
 	public void setProxy(String proxy) {
 		this.proxy = proxy;
+	}
+	public boolean getHTTP11(){
+		return this.HTTP11;
+	}
+	
+	public boolean getusesProxy(){
+		return this.usesProxy;
+	}
+	
+	public String getProxy(){
+		return this.proxy;
+	}
+	
+	public int getProfundidadMaxima(){
+		return this.profundidadMaxima;
+	}
+	
+	public int getCanthijosAProcesar(){
+		return this.canthijosAProcesar;
+	}
+	
+	public HashMap<String, String> getLinks(){
+		return this.links;
+	}
+	
+	public List<String> getMails(){
+		return this.mails;
+	}
+	 
+	public List<Pair<Integer, String>> getAProcesar(){
+		return this.aProcesar;
 	}
 
 	public boolean usesDebug(){

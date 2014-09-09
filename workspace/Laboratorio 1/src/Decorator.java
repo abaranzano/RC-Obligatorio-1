@@ -7,8 +7,8 @@ import javax.swing.JOptionPane;
 
 public class Decorator implements Runnable {
 
-	Descriptor descriptor = null;
-	Worker worker = null;
+	private Descriptor descriptor = null;
+	private Worker worker = null;
 
 	public void setDescriptor(Descriptor descriptor) {
 		this.descriptor = descriptor;
