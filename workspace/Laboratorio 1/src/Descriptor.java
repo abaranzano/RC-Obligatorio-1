@@ -20,10 +20,18 @@ public class Descriptor {
 		this.aProcesar = new ArrayList<Pair<Integer, String>>();
 	}
 
-	public void agregarURL(Integer profundidad, String url) {
-		this.aProcesar.add(new Pair<Integer, String>(profundidad, url));
+	public synchronized void agregarURL(Integer profundidad, String url) {
+		if (this.aProcesar.size() == 0) {
+			this.aProcesar.add(new Pair<Integer, String>(profundidad, url));
+		} else {
+			int i = 0;
+			while (i < this.aProcesar.size() && this.aProcesar.get(i).getDepth() < profundidad) {
+				i++;				
+			}
+			this.aProcesar.add(i, new Pair<Integer, String>(profundidad, url));
+		}
 	}
-	
+
 	public void addLink(String link) {
 		this.links.put(link, link);
 	}
@@ -76,7 +84,6 @@ public class Descriptor {
 	public void setProxy(String proxy) {
 		this.proxy = proxy;
 	}
-	
 	public boolean getHTTP11(){
 		return this.HTTP11;
 	}
@@ -108,5 +115,6 @@ public class Descriptor {
 	public List<Pair<Integer, String>> getAProcesar(){
 		return this.aProcesar;
 	}
+
 
 }

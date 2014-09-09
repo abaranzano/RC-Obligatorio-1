@@ -39,7 +39,9 @@ class Worker {
 		try {
 			URL url = new URL(urlAProcesar.getUrl());
 			this.host = url.getHost();
-			this.port = url.getPort();
+			if (url.getPort() != -1) {
+				this.port = url.getPort();
+			}
 			this.path = url.getPath();
 			this.socket = new Socket(this.host, this.port);
 		} catch (MalformedURLException e) {
