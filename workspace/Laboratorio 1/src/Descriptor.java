@@ -8,8 +8,8 @@ public class Descriptor {
 	private boolean HTTP11 = false;
 	private boolean usesProxy = false;
 	private String proxy = null;
-	private int profundidadMaxima = 1;
-	private int canthijosAProcesar = 2; //esto despues sw puede ir
+	private int profundidadMaxima = 4;
+	private int canthijosAProcesar = -1; //esto despues sw puede ir
 	private HashMap<String, String> links = null;
 	private List<String> mails = null;
 	private List<Pair<Integer, String>> aProcesar = null;
@@ -19,16 +19,24 @@ public class Descriptor {
 		this.mails = new ArrayList<String>();
 		this.aProcesar = new ArrayList<Pair<Integer, String>>();
 	}
-
+	
 	public synchronized void agregarURL(Integer profundidad, String url) {
+		
+		//si la url no comienza sin http:// se la concateno
+		String url_bien = url;
+		if (!url.substring(0, 7).equals("http://")) {
+			url_bien = "http://" + url;
+		}
+		
 		if (this.aProcesar.size() == 0) {
-			this.aProcesar.add(new Pair<Integer, String>(profundidad, url));
+			this.aProcesar.add(new Pair<Integer, String>(profundidad, url_bien));
 		} else {
 			int i = 0;
 			while (i < this.aProcesar.size() && this.aProcesar.get(i).getDepth() < profundidad) {
 				i++;				
 			}
-			this.aProcesar.add(i, new Pair<Integer, String>(profundidad, url));
+			
+			this.aProcesar.add(i, new Pair<Integer, String>(profundidad, url_bien));
 		}
 	}
 
