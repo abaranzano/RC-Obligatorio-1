@@ -50,6 +50,9 @@ class Worker {
 			}
 
 			this.socket = new Socket(this.host, this.port);
+			if (descriptor.usesDebug()){
+				System.out.println("[debug] Abro la conexion al host:[" + this.host + "] puerto:[" + this.port + "].");
+			}
 		} catch (MalformedURLException e) {
 			System.err.println("Error. La url a procesar no tiene un protocolo válido. Error Original: " + e.getMessage());
 		} catch (UnknownHostException e) {
@@ -99,12 +102,11 @@ class Worker {
 
 		out.write(httpGet);
 
-		System.out.println("Se envio el siguiente mensaje: " );
-		System.out.println(httpGet);
-		System.out.println("Fin del mensaje");
-		System.out.println("HTTP Get Message: ");
-		System.out.println(httpGet);
-
+		if (descriptor.usesDebug()){
+			System.out.println("[debug] Se envio el siguiente mensaje: " );
+			System.out.println("[debug] " + httpGet);
+			System.out.println("[debug] Fin del mensaje");
+		}
 
 
 		out.flush();
@@ -116,7 +118,6 @@ class Worker {
 				new InputStreamReader(socket.getInputStream()));
 		String line;
 
-		System.out.println("\n HTTP Response Message: ");
 		String response = "";	//con null, lo toma como string y lo concatena al principio
 		while ((line = in.readLine()) != null) {
 			response += line + "\n";
@@ -132,14 +133,15 @@ class Worker {
 		//Cerramos la conexion
 		escribir.close();
 
-		//IMPRIMO EL RESPONSE
-		//System.out.println(response);
 		return response;
 	}
 
 	public void close() throws IOException {
 		out.close();
 		in.close();
+		if (this.descriptor.usesDebug()) {
+			System.out.println("[debug] Cierro conexion con host:[" + this.host + "] puerto:[" + this.port + "].");
+		}
 	}
 
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
@@ -205,7 +207,7 @@ class Worker {
 		//aumento la profundidad actual
 
 		if (this.descriptor.usesDebug()){
-			System.out.println("DEBUG: url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
+			System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
 		}
 
 	}

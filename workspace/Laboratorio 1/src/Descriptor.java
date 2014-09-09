@@ -8,18 +8,18 @@ public class Descriptor {
 	private boolean HTTP11 = false;
 	private boolean usesProxy = false;
 	private String proxy = null;
-	private int profundidadMaxima = 1;
+	private int profundidadMaxima = -1;
 	private int canthijosAProcesar = 2; //esto despues sw puede ir
 	private HashMap<String, String> links = null;
 	private List<String> mails = null;
 	private List<Pair<Integer, String>> aProcesar = null;	
-	public boolean usesDebug = false;
+	private boolean usesDebug = false;
 	private boolean usesPozos = false;
-	private String filePozos;
+	private String filePozos = null;
 	private boolean usesMultilang = false;
 	private String fileMultilang;
 	private int cantHilos = 1;
-	private int cantHilosFinalizados = 0;
+	private int cantHilosFinalizados = 1; //Empieza en la misma cantidad que los Hilos por que el "revivo" resta.
 
 	public Descriptor() {
 		this.links = new HashMap<String,String>();
