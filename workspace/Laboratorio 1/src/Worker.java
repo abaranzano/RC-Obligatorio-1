@@ -178,7 +178,9 @@ class Worker {
 
 		int cantLiknks = links.size();
 		if (this.descriptor.getCanthijosAProcesar() != -1){
-			cantLiknks = this.descriptor.getCanthijosAProcesar();
+			if (cantLiknks > this.descriptor.getCanthijosAProcesar()) {
+				cantLiknks = this.descriptor.getCanthijosAProcesar();
+			}
 		}
 
 		for (int i = 0; i <cantLiknks; i++){
