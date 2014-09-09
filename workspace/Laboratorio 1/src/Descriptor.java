@@ -12,16 +12,16 @@ public class Descriptor {
 	public int canthijosAProcesar = 2; //esto despues sw puede ir
 	public HashMap<String, String> links = null;
 	public List<String> mails = null;
-	public List<Pair<Long, String>> aProcesar = null;
+	public List<Pair<Integer, String>> aProcesar = null;
 
 	public Descriptor() {
 		this.links = new HashMap<String,String>();
 		this.mails = new ArrayList<String>();
-		this.aProcesar = new ArrayList<Pair<Long, String>>();
+		this.aProcesar = new ArrayList<Pair<Integer, String>>();
 	}
 
-	public void agregarURL(String url, Long profundidad) {
-		this.aProcesar.add(new Pair<Long, String>(profundidad, url));
+	public void agregarURL(Integer profundidad, String url) {
+		this.aProcesar.add(new Pair<Integer, String>(profundidad, url));
 	}
 	
 	public void addLink(String link) {
@@ -32,7 +32,7 @@ public class Descriptor {
 		this.mails.add(mail);
 	}
 
-	public synchronized Pair<Long, String> getData() {
+	public synchronized Pair<Integer, String> getData() {
 		Pair ret = null;
 		if (aProcesar.size() > 0) {
 			if (profundidadMaxima != -1) {

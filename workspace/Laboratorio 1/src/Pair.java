@@ -1,10 +1,10 @@
 
-public class Pair<Long, String> {
+public class Pair<Integer, String> {
 	
-	public Long depth;
+	public Integer depth;
 	public String url;
 	
-	Pair(Long depth, String url) {
+	Pair(Integer depth, String url) {
 		this.depth = depth;
 		this.url = url;
 	}
@@ -13,7 +13,7 @@ public class Pair<Long, String> {
 		return this.url;
 	}
 	
-	public Long getDepth(){
+	public Integer getDepth(){
 		return this.depth;
 	}
 

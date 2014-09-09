@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,7 +22,8 @@ import javax.swing.JOptionPane;
 class Worker { 
 
 	String host = null;
-	Pair url_aProcesar;
+	Pair<Integer,String> urlAProcesar;
+
 	String path = null;
 	int port = 80;
 	Socket socket = null;
@@ -28,18 +31,19 @@ class Worker {
 	BufferedReader in = null;
 	Descriptor descriptor = null;
 
-	public Worker (String host, int port, String path) {
-		
-		this.host = host;		
-		if (port != -1) {
-			this.port = port;
-		}
-		this.path = path;
+	public Worker (Pair<Integer, String> actual) {
+		this.urlAProcesar = actual;
 	}
 
 	public void abrirSocket() throws IOException  {
 		try {
+			URL url = new URL(urlAProcesar.getUrl());
+			this.host = url.getHost();
+			this.port = url.getPort();
+			this.path = url.getPath();
 			this.socket = new Socket(this.host, this.port);
+		} catch (MalformedURLException e) {
+			System.err.println("Error. La url a procesar no tiene un protocolo válido. Error Original: " + e.getMessage());
 		} catch (UnknownHostException e) {
 			System.err.println("Error. No se reconoce el Host:[" + this.host + "].");
 		} catch (IllegalArgumentException e) {
@@ -62,8 +66,8 @@ class Worker {
 		close();
 		//Cierro el Socket antes de procesar la respuesta. No hay necesidad de mantenerlo abierto.
 		procesarRespuesta(response);
-		
-		
+
+
 
 	}
 
@@ -77,13 +81,13 @@ class Worker {
 			httpGet += " HTTP/1.0";
 		}
 		httpGet += "\r\n";
-		
+
 		httpGet +="Accept: text/plain, text/html, text/*\r\n";
 		httpGet +="Host: " + host + ":" + port + "\r\n";
 		httpGet +="\r\n";
-		
+
 		//httpGet += "\n";
-		
+
 		out.write(httpGet);
 
 		System.out.println("Se envio el siguiente mensaje: " );
@@ -91,9 +95,9 @@ class Worker {
 		System.out.println("Fin del mensaje");
 		System.out.println("HTTP Get Message: ");
 		System.out.println(httpGet);
-		
-		
-		
+
+
+
 		out.flush();
 
 	}
@@ -118,9 +122,9 @@ class Worker {
 		escribir.write(response);
 		//Cerramos la conexion
 		escribir.close();
-				
+
 		//IMPRIMO EL RESPONSE
-	    //System.out.println(response);
+		//System.out.println(response);
 		return response;
 	}
 
@@ -131,33 +135,33 @@ class Worker {
 
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
 			Pattern.compile("[-\\w\\.]+@[\\.\\w]+\\.\\w+", Pattern.CASE_INSENSITIVE);
-	 		List<String> getEmails(String TextHTML) {
-		         
-				Pattern p = VALID_EMAIL_ADDRESS_REGEX;
-				List<String> emails = new ArrayList<String>();
-		        Matcher matcher = p.matcher(TextHTML);
-				while (matcher.find()) {
-					emails.add(matcher.group());
-				}
-		        return emails;
+	List<String> getEmails(String TextHTML) {
+
+		Pattern p = VALID_EMAIL_ADDRESS_REGEX;
+		List<String> emails = new ArrayList<String>();
+		Matcher matcher = p.matcher(TextHTML);
+		while (matcher.find()) {
+			emails.add(matcher.group());
 		}
-		
+		return emails;
+	}
+
 	public void procesarRespuesta(String response) {
 		//TODO: Procesar la respuesta bien.
 		//Obtengo el codigo de respuesta, si es 200 esta todo bien, sino hacemos algo
 		String statusCode = response.substring(9,12);
 		//JOptionPane.showMessageDialog(null, statusCode);
-		
+
 		int indiceContentType = 0; //donde arranca el content type
 		indiceContentType = response.indexOf("Content-Type");
-		
+
 		//obtengo el content type, proceso solo si es un html
 		String contenttype = response.substring(indiceContentType + 14, indiceContentType + 23);
 		//if(contenttype.equals("text/html"))
-			//JOptionPane.showMessageDialog(null, contenttype);
-		
-		
-		
+		//JOptionPane.showMessageDialog(null, contenttype);
+
+
+
 		//----------------------OBTENGO LOS EMAILS-----------------------------------------------------------------------------//
 		Iterator<String> iter = getEmails(response).iterator();
 		while(iter.hasNext()){
@@ -167,27 +171,27 @@ class Worker {
 			System.out.println("MAIL: " + mail);
 		}
 		//---------------------------------------------------------------------------------------------------------------------//
-		
+
 		//-------------------------------OBTENGO LOS LINKS --------------------------------------------------------------------//
 		HtmlExtractor htmlExtractor = new HtmlExtractor();
 		Vector<HtmlLink> links = htmlExtractor.grabHTMLLinks(response);
-		
+
 		int cantLiknks = links.size();
 		if (this.descriptor.canthijosAProcesar != -1){
 			cantLiknks = this.descriptor.canthijosAProcesar;
 		}
-		
+
 		for (int i = 0; i <cantLiknks; i++){
-			
+
 			this.descriptor.addLink(links.elementAt(i).link); //como es un hash si existe no lo agrega
-			
+
 			//se controla la existencia del link a rocesar en el decorator.run()
-			this.descriptor.agregarURL("http://" + this.host + "/" + links.elementAt(i).link, (long) 0);
+			this.descriptor.agregarURL(this.urlAProcesar.getDepth() , "http://" + this.host + "/" + links.elementAt(i).link);
 			System.out.println("LINK: " + links.elementAt(i).link + "VIENE DE: " + this.host);
 		}
-		
+
 		//---------------------------------------------------------------------------------------------------------------------//
 		//aumento la profundidad actual
-		
+
 	}
 } 
