@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import javax.swing.JOptionPane;
+
 
 public class Decorator implements Runnable {
 
@@ -18,7 +20,7 @@ public class Decorator implements Runnable {
 
 	@Override
 	public void run() {
-		String urlAProcesar = this.descriptor.getData();	
+		String urlAProcesar = this.descriptor.getData().getUrl();	
 
 		if (urlAProcesar != null) {
 			try {
@@ -36,6 +38,8 @@ public class Decorator implements Runnable {
 
 					//TODO: Chequear que la url.getPath() de el camino correcto completo, fijarse si tiene alguna variable o referencia (estilo ?name=algo o #Ref) 
 					this.worker = new Worker(url.getHost(), url.getPort(), path);
+					JOptionPane.showMessageDialog(null, "url  " +urlAProcesar);
+					JOptionPane.showMessageDialog(null, "host " +url.getHost());
 					worker.setDescriptor(this.descriptor);
 					worker.doJob();
 				} else {

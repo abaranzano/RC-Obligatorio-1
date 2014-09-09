@@ -8,5 +8,13 @@ public class Pair<Long, String> {
 		this.depth = depth;
 		this.url = url;
 	}
+	
+	public String getUrl(){
+		return this.url;
+	}
+	
+	public Long getDepth(){
+		return this.depth;
+	}
 
 }

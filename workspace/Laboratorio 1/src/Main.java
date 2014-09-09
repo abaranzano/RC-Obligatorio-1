@@ -35,7 +35,7 @@ public class Main {
              parser  = new BasicParser();  
              cmdLine = parser.parse(options, args);             
              if (cmdLine.getArgs().length != 0) {
-            	 descriptor.agregarURL(cmdLine.getArgs()[0]);
+            	 descriptor.agregarURL(cmdLine.getArgs()[0],(long) 0);
              } else {
             	 System.err.println("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
              }
@@ -70,7 +70,11 @@ public class Main {
 //		descriptor.aProcesar.add("http://www.fing.edu.uy/inco/cursos/compil/");
 //		descriptor.aProcesar.add("http://www.fing.edu.uy/inco/inicio");
 		Thread[] t = new Thread[cantidadHilos];
+		
+		int cuantasvecesbusque = 0;
 		while (!salir) {
+			cuantasvecesbusque ++;
+			
 			/*
 			 * Recreo hilos cada vez que los 5 terminan de procesar una URL.
 			 * Esto no es muy efectivo xq tengo que recrearlos cada vez.
@@ -81,7 +85,7 @@ public class Main {
 			 * Necesito saber si terminaron de procesar todos los hilos para estar seguro que termine de procesar todo
 			 */
 			for (int i = 0; i < cantidadHilos; i++) { 
-
+			
 				Decorator decoratorInstance = new Decorator();
 				decoratorInstance.setDescriptor(descriptor);
 
@@ -100,6 +104,8 @@ public class Main {
 				salir = true;
 			}
 		}
+		
+		System.out.println("Cuantas quise procesar: " + cuantasvecesbusque);
 		
 	}
 
