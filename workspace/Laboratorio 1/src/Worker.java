@@ -17,8 +17,6 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.JOptionPane;
-
 class Worker { 
 
 	private String host = null;
@@ -37,13 +35,24 @@ class Worker {
 
 	public void abrirSocket() throws IOException  {
 		try {
-			URL url = new URL(urlAProcesar.getUrl());
+			URL url = null;
+			if (this.descriptor.getUsesProxy()) {
+				url = new URL(this.descriptor.getProxy());
+				this.path = urlAProcesar.getUrl();
+			} else {
+				url = new URL(urlAProcesar.getUrl());
+				this.path = url.getPath();
+			}
+
 			this.host = url.getHost();
 			if (url.getPort() != -1) {
 				this.port = url.getPort();
 			}
-			this.path = url.getPath();
+
 			this.socket = new Socket(this.host, this.port);
+			if (descriptor.usesDebug()){
+				System.out.println("[debug] Abro la conexion al host:[" + this.host + "] puerto:[" + this.port + "].");
+			}
 		} catch (MalformedURLException e) {
 			System.err.println("Error. La url a procesar no tiene un protocolo válido. Error Original: " + e.getMessage());
 		} catch (UnknownHostException e) {
@@ -65,7 +74,8 @@ class Worker {
 		abrirSocket();
 		HTTPGet();
 		String response = HTTPResponse();
-		close();
+		close(); //Cierro solo si no uso
+
 		//Cierro el Socket antes de procesar la respuesta. No hay necesidad de mantenerlo abierto.
 		procesarRespuesta(response);
 
@@ -92,9 +102,11 @@ class Worker {
 
 		out.write(httpGet);
 
-		System.out.println("Se envio el siguiente mensaje: " );
-		System.out.println(httpGet);
-
+		if (descriptor.usesDebug()){
+			System.out.println("[debug] Se envio el siguiente mensaje: " );
+			System.out.println("[debug] " + httpGet);
+			System.out.println("[debug] Fin del mensaje");
+		}
 
 
 
@@ -107,7 +119,6 @@ class Worker {
 				new InputStreamReader(socket.getInputStream()));
 		String line;
 
-		System.out.println("\n HTTP Response Message: ");
 		String response = "";	//con null, lo toma como string y lo concatena al principio
 		while ((line = in.readLine()) != null) {
 			response += line + "\n";
@@ -123,14 +134,15 @@ class Worker {
 		//Cerramos la conexion
 		escribir.close();
 
-		//IMPRIMO EL RESPONSE
-		//System.out.println(response);
 		return response;
 	}
 
 	public void close() throws IOException {
 		out.close();
 		in.close();
+		if (this.descriptor.usesDebug()) {
+			System.out.println("[debug] Cierro conexion con host:[" + this.host + "] puerto:[" + this.port + "].");
+		}
 	}
 
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
@@ -178,7 +190,9 @@ class Worker {
 
 		int cantLiknks = links.size();
 		if (this.descriptor.getCanthijosAProcesar() != -1){
-			cantLiknks = this.descriptor.getCanthijosAProcesar();
+			if (cantLiknks > this.descriptor.getCanthijosAProcesar()) {
+				cantLiknks = this.descriptor.getCanthijosAProcesar();
+			}
 		}
 
 		for (int i = 0; i <cantLiknks; i++){
@@ -226,6 +240,10 @@ class Worker {
 
 		//---------------------------------------------------------------------------------------------------------------------//
 		//aumento la profundidad actual
+
+		if (this.descriptor.usesDebug()){
+			System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
+		}
 
 	}
 } 
