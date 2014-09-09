@@ -12,7 +12,12 @@ public class Descriptor {
 	private int canthijosAProcesar = 2; //esto despues sw puede ir
 	private HashMap<String, String> links = null;
 	private List<String> mails = null;
-	private List<Pair<Integer, String>> aProcesar = null;
+	private List<Pair<Integer, String>> aProcesar = null;	
+	public boolean usesDebug = false;
+	private boolean usesPozos = false;
+	private String filePozos;
+	private boolean usesMultilang = false;
+	private String fileMultilang;
 	private int cantHilos = 1;
 	private int cantHilosFinalizados = 0;
 
@@ -118,6 +123,46 @@ public class Descriptor {
 		return this.aProcesar;
 	}
 
+	public boolean usesDebug(){
+		return this.usesDebug;
+	}
+	
+	public void setDebug(){
+		this.usesDebug = true;
+	}
+
+	public boolean getPozo(){
+		return this.usesPozos;
+	}
+	
+	public void setPozo(){
+		this.usesPozos = true;
+	}
+	
+	public String getFilePozo(){
+		return this.filePozos;
+	}
+	
+	public void setFilePozo(String path){
+		this.filePozos = path;
+	}
+	
+	public boolean getMultilang(){
+		return this.usesMultilang;
+	}
+	
+	public void setMultilang(){
+		this.usesMultilang = true;
+	}
+	
+	public String getFileMultilang(){
+		return this.fileMultilang;
+	}
+	
+	public void setFileMultilang(String path){
+		this.fileMultilang = path;
+	}
+
 	public int getCantHilos() {
 		return cantHilos;
 	}
@@ -142,5 +187,6 @@ public class Descriptor {
 	public synchronized int getCantidadDatosAProcesar() {
 		return this.aProcesar.size();
 	}
+
 
 }

@@ -195,5 +195,9 @@ class Worker {
 		//---------------------------------------------------------------------------------------------------------------------//
 		//aumento la profundidad actual
 
+		if (this.descriptor.usesDebug()){
+			System.out.println("DEBUG: url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
+		}
+			
 	}
 } 
