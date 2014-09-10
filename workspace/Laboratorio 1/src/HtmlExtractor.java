@@ -10,7 +10,7 @@ public class HtmlExtractor {
  
 	private static final String HTML_A_TAG_PATTERN = "(?i)<a([^>]+)>(.+?)</a>";
 	private static final String HTML_A_HREF_TAG_PATTERN = 
-		"\\s*(?i)href\\s*=\\s*(\"([^\"]*\")|'[^']*'|([^'\">\\s]+))";
+		"(?i)href\\s*=\\s*\"([^\"]*)\"";
  
  
 	public HtmlExtractor() {

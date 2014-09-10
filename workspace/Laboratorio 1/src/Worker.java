@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -189,57 +190,68 @@ class Worker {
 		Vector<HtmlLink> links = htmlExtractor.grabHTMLLinks(response);
 
 		int cantLiknks = links.size();
-		if (this.descriptor.getCanthijosAProcesar() != -1){
-			if (cantLiknks > this.descriptor.getCanthijosAProcesar()) {
-				cantLiknks = this.descriptor.getCanthijosAProcesar();
-			}
-		}
+//		if (this.descriptor.getCanthijosAProcesar() != -1){
+//			if (cantLiknks > this.descriptor.getCanthijosAProcesar()) {
+//				cantLiknks = this.descriptor.getCanthijosAProcesar();
+//			}
+//		}
 
 		for (int i = 0; i <cantLiknks; i++){
 			String link = links.elementAt(i).link;
-			
+
 			if(link.contains("#")){
 				int posNum = link.indexOf("#");
 				link = link.substring(0, posNum);
 			}
+
+			if (!link.contains("/")) {
+				//No tiene nada. Es de la forma index.php
+				link = "/" + link;
+			}
+			if (link.startsWith("/") ) {
+				//No tiene nada. Es de la forma /index.php. Agrego el host que es en la misma pagina.
+				link = this.host + link; //ya tiene path, concateno el host					
+			}
+
+			if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
+				//Verifico que tenga protocolo. Si no lo tiene le agrego por defecto http.
+				link = "http://" + link;
+			}
 			
-				if (link.length()== 0){
-					link = this.host + "/";
+			boolean error = false;
+			URL url = null;
+			try {
+				url = new URL(link);
+				try {
+					if (url.getPath() == null || url.getPath().isEmpty() || "".equalsIgnoreCase(url.getPath())) {
+						//No tiene path. Lo agrego.
+						link = link + "/";
+						url = new URL(link);
+					}
+					url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
+				} catch (URISyntaxException e) {
+					error = true;
+					System.err.println("No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
 				}
-				else
-				if (link.substring(0, 1).equals("/") )
-				{ //si tengo un numeral, al pedir lo que esta antes puede quedar vacio. Es un link a la misma pagina
-					link = this.host + link; //ya tiene path, concateno el host					
-				}
-				else{
-						if (!link.contains("http://") && !link.contains("www"))
-						{ //no comienza con / y no contiene el host
-							link = this.host + "/" + link; //ya tiene path							
-						}
-						if (!link.contains("http://") && !link.contains("/") )
-						{ //no tiene path por lo tanto le agrego la barra al final, y no  agrego el host. Agregar URL agrega el http://
-							link = link + "/";
-						}
-						if (link.contains("http://") && !link.substring(5).contains("/"))
-						{ //no tiene path
-							link = link + "/";						
-						}
-					
-				};
-				
-				//controlo existencia, si no existe, agrego
+			} catch (MalformedURLException e) {
+				//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
+				error = true;
+				System.err.println("Error inesperado en url");
+			}
+			
+
+			//controlo existencia, si no existe, agrego
+			if (!error) {
 				if(!this.descriptor.getLinks().containsKey(link))
 				{				
 					this.descriptor.addLink(link); //como es un hash si existe no lo agrega
-					
-					this.descriptor.agregarURL(this.urlAProcesar.getDepth() ,  link);
+
+					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
 					System.out.println("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.host + this.path + " AGREGO: " + link);
 				}
-			
-		}
+			}
 
-		//---------------------------------------------------------------------------------------------------------------------//
-		//aumento la profundidad actual
+		}
 
 		if (this.descriptor.usesDebug()){
 			System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);

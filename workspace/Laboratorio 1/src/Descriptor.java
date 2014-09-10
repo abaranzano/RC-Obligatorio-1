@@ -28,22 +28,16 @@ public class Descriptor {
 	}
 	
 	public synchronized void agregarURL(Integer profundidad, String url) {
-		
-		//si la url no comienza sin http:// se la concateno
-		String url_bien = url;
-		if (!url.substring(0, 7).equals("http://")) {
-			url_bien = "http://" + url;
-		}
-		
+
 		if (this.aProcesar.size() == 0) {
-			this.aProcesar.add(new Pair<Integer, String>(profundidad, url_bien));
+			this.aProcesar.add(new Pair<Integer, String>(profundidad, url));
 		} else {
 			int i = 0;
 			while (i < this.aProcesar.size() && this.aProcesar.get(i).getDepth() < profundidad) {
 				i++;				
 			}
 			
-			this.aProcesar.add(i, new Pair<Integer, String>(profundidad, url_bien));
+			this.aProcesar.add(i, new Pair<Integer, String>(profundidad, url));
 		}
 	}
 

@@ -33,6 +33,7 @@ public class Main {
 			parser  = new BasicParser();  
 			cmdLine = parser.parse(options, args);             
 			if (cmdLine.getArgs().length != 0) {
+				descriptor.addLink(cmdLine.getArgs()[0]); //Agrego como procesada, ya que la primera la proceso siempre.
 				descriptor.agregarURL(0, cmdLine.getArgs()[0]);
 			} else {
 				System.err.println("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
