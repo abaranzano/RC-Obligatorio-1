@@ -18,6 +18,8 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.JOptionPane;
+
 class Worker { 
 
 	private String host = null;
@@ -255,6 +257,21 @@ class Worker {
 
 		if (this.descriptor.usesDebug()){
 			System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
+		}
+		
+		//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
+		//Si no tiene este tag, esta en uno solo
+		if(this.descriptor.getMultilang() && response.contains("Content-language")){	 
+			File archivo = new File(this.descriptor.getFileMultilang());	//Pasarle la Ruta relativa dentro del proyecto
+			try{
+				FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
+				fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
+				fw.close();
+			}
+			catch (IOException e){
+				System.err.println("No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
+			}
+			
 		}
 
 	}
