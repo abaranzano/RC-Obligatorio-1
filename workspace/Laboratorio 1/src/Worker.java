@@ -81,9 +81,6 @@ class Worker {
 
 		//Cierro el Socket antes de procesar la respuesta. No hay necesidad de mantenerlo abierto.
 		procesarRespuesta(response);
-
-
-
 	}
 
 	public void HTTPGet() throws UnsupportedEncodingException, IOException {
@@ -163,124 +160,138 @@ class Worker {
 	}
 
 	public void procesarRespuesta(String response) {
-		//TODO: Procesar la respuesta bien.
 		//Obtengo el codigo de respuesta, si es 200 esta todo bien, sino hacemos algo
 		String statusCode = response.substring(9,12);
-		//JOptionPane.showMessageDialog(null, statusCode);
-
 		int indiceContentType = 0; //donde arranca el content type
 		indiceContentType = response.indexOf("Content-Type");
-
 		//obtengo el content type, proceso solo si es un html
 		String contenttype = response.substring(indiceContentType + 14, indiceContentType + 23);
-		//if(contenttype.equals("text/html"))
-		//JOptionPane.showMessageDialog(null, contenttype);
-
-
-
-		//----------------------OBTENGO LOS EMAILS-----------------------------------------------------------------------------//
-		Iterator<String> iter = getEmails(response).iterator();
-		while(iter.hasNext()){
-			//JOptionPane.showMessageDialog(null, iter.next());
-			String mail = iter.next();
-			this.descriptor.addMail(mail);
-			System.out.println("MAIL: " + mail);
-		}
-		//---------------------------------------------------------------------------------------------------------------------//
-
-		//-------------------------------OBTENGO LOS LINKS --------------------------------------------------------------------//
-		HtmlExtractor htmlExtractor = new HtmlExtractor();
-		Vector<HtmlLink> links = htmlExtractor.grabHTMLLinks(response);
-
-		int cantLinks = links.size();
-		if (cantLinks == 0 && this.descriptor.getPozo()) {
-			File archivo = new File(this.descriptor.getFilePozo());	//Pasarle la Ruta relativa dentro del proyecto
-			try{
-				FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
-				fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
-				fw.close();
-			}
-			catch (IOException e){
-				System.err.println("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
-			}
-		}
-	
-		for (int i = 0; i < cantLinks; i++){
-			String link = links.elementAt(i).link;
-
-			if(link.contains("#")){
-				//No me importan las Reference. Es la misma URL
-				int posNum = link.indexOf("#");
-				link = link.substring(0, posNum);
-			}
-
-			if (!link.contains("/")) {
-				//No tiene nada. Es de la forma index.php
-				link = "/" + link;
-			}
-			if (link.startsWith("/") ) {
-				//No tiene nada. Es de la forma /index.php. Agrego el host que es en la misma pagina.
-				link = this.host + link; //ya tiene path, concateno el host					
-			}
-
-			if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
-				//Verifico que tenga protocolo. Si no lo tiene le agrego por defecto http.
-				link = "http://" + link;
-			}
-			
-			boolean error = false;
-			URL url = null;
-			try {
-				url = new URL(link);
-				try {
-					if (url.getPath() == null || url.getPath().isEmpty() || "".equalsIgnoreCase(url.getPath())) {
-						//No tiene path. Lo agrego.
-						link = link + "/";
-						url = new URL(link);
-					}
-					url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
-				} catch (URISyntaxException e) {
-					error = true;
-					System.err.println("No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
-				}
-			} catch (MalformedURLException e) {
-				//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
-				error = true;
-				System.err.println("Error inesperado en url");
-			}
-			
-
-			//controlo existencia, si no existe, agrego
-			if (!error) {
-				if(!this.descriptor.getLinks().containsKey(link))
-				{				
-					this.descriptor.addLink(link); //como es un hash si existe no lo agrega
-
-					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
-					System.out.println("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.host + this.path + " AGREGO: " + link);
-				}
-			}
-
-		}
-
-		if (this.descriptor.usesDebug()){
-			System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
-		}
 		
-		//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
-		//Si no tiene este tag, esta en uno solo
-		if(this.descriptor.getMultilang() && response.contains("Content-language")){	 
-			File archivo = new File(this.descriptor.getFileMultilang());	//Pasarle la Ruta relativa dentro del proyecto
-			try{
-				FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
-				fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
-				fw.close();
+		if(contenttype.equals("text/html")){ 
+	
+			
+			if(statusCode.equals("200")){
+		
+			//----------------------OBTENGO LOS EMAILS-----------------------------------------------------------------------------//
+			Iterator<String> iter = getEmails(response).iterator();
+			while(iter.hasNext()){
+				//JOptionPane.showMessageDialog(null, iter.next());
+				String mail = iter.next();
+				this.descriptor.addMail(mail);
+				System.out.println("MAIL: " + mail);
 			}
-			catch (IOException e){
-				System.err.println("No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
+			//---------------------------------------------------------------------------------------------------------------------//
+	
+			//-------------------------------OBTENGO LOS LINKS --------------------------------------------------------------------//
+			HtmlExtractor htmlExtractor = new HtmlExtractor();
+			Vector<HtmlLink> links = htmlExtractor.grabHTMLLinks(response);
+	
+			int cantLinks = links.size();
+			if (cantLinks == 0 && this.descriptor.getPozo()) {
+				File archivo = new File(this.descriptor.getFilePozo());	//Pasarle la Ruta relativa dentro del proyecto
+				try{
+					FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
+					fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
+					fw.close();
+				}
+				catch (IOException e){
+					System.err.println("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
+				}
+			}
+		
+			for (int i = 0; i < cantLinks; i++){
+				String link = links.elementAt(i).link;
+	
+				if(link.contains("#")){
+					//No me importan las Reference. Es la misma URL
+					int posNum = link.indexOf("#");
+					link = link.substring(0, posNum);
+				}
+	
+				if (!link.contains("/")) {
+					//No tiene nada. Es de la forma index.php
+					link = "/" + link;
+				}
+				if (link.startsWith("/") ) {
+					//No tiene nada. Es de la forma /index.php. Agrego el host que es en la misma pagina.
+					link = this.host + link; //ya tiene path, concateno el host					
+				}
+	
+				if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
+					//Verifico que tenga protocolo. Si no lo tiene le agrego por defecto http.
+					link = "http://" + link;
+				}
+				
+				boolean error = false;
+				URL url = null;
+				try {
+					url = new URL(link);
+					try {
+						if (url.getPath() == null || url.getPath().isEmpty() || "".equalsIgnoreCase(url.getPath())) {
+							//No tiene path. Lo agrego.
+							link = link + "/";
+							url = new URL(link);
+						}
+						url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
+					} catch (URISyntaxException e) {
+						error = true;
+						System.err.println("No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
+					}
+				} catch (MalformedURLException e) {
+					//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
+					error = true;
+					System.err.println("Error inesperado en url");
+				}
+				
+	
+				//controlo existencia, si no existe, agrego
+				if (!error) {
+					if(!this.descriptor.getLinks().containsKey(link))
+					{				
+						this.descriptor.addLink(link); //como es un hash si existe no lo agrega
+	
+						this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
+						System.out.println("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.host + this.path + " AGREGO: " + link);
+					}
+				}
+	
+			}
+	
+			if (this.descriptor.usesDebug()){
+				System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
+			}
+			
+			//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
+			//Si no tiene este tag, esta en uno solo
+			if(this.descriptor.getMultilang() && response.contains("Content-language")){	 
+				File archivo = new File(this.descriptor.getFileMultilang());	//Pasarle la Ruta relativa dentro del proyecto
+				try{
+					FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
+					fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
+					fw.close();
+				}
+				catch (IOException e){
+					System.err.println("No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
+				}
+				
 			}
 			
 		}
+			else{	//Status Code <> 200
+				if(statusCode.equals("301") || statusCode.equals("302") || statusCode.equals("303")){	//Considero link de redireccion
+					int posLocation = response.indexOf("Location");
+					String link = response.substring(posLocation + 10);
+					if(!this.descriptor.getLinks().containsKey(link))
+					{				
+						this.descriptor.addLink(link); //como es un hash si existe no lo agrega
+						this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
+					}
+				}
+				else{
+					System.err.println("Error: se recibio status code " + statusCode);
+				}
+				}
+		}	//text/html
 
-	}
+}
 } 
