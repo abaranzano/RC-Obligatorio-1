@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Descriptor {
 
-	private boolean HTTP11 = false;
+	private boolean isPersistent = false;
 	private boolean usesProxy = false;
 	private String proxy = null;
 	private int profundidadMaxima = -1;
@@ -26,7 +26,7 @@ public class Descriptor {
 		this.mails = new ArrayList<String>();
 		this.aProcesar = new ArrayList<Pair<Integer, String>>();
 	}
-	
+
 	public synchronized void agregarURL(Integer profundidad, String url) {
 
 		if (this.aProcesar.size() == 0) {
@@ -36,7 +36,7 @@ public class Descriptor {
 			while (i < this.aProcesar.size() && this.aProcesar.get(i).getDepth() < profundidad) {
 				i++;				
 			}
-			
+
 			this.aProcesar.add(i, new Pair<Integer, String>(profundidad, url));
 		}
 	}
@@ -68,16 +68,14 @@ public class Descriptor {
 	}
 
 
-	public boolean isHTTP11() {
-		return this.HTTP11;
+	public boolean isPersistent() {
+		return this.isPersistent;
 	}
 
 
-	public void setHTTP11(boolean hTTP11) {
-		this.HTTP11 = hTTP11;
+	public void setPersistent(boolean persistent) {
+		this.isPersistent = persistent;
 	}
-
-
 
 	public void setProfundidadMaxima(int profundidadMaxima) {
 		this.profundidadMaxima = profundidadMaxima;
@@ -94,9 +92,6 @@ public class Descriptor {
 
 	public void setProxy(String proxy) {
 		this.proxy = proxy;
-	}
-	public boolean getHTTP11(){
-		return this.HTTP11;
 	}
 
 	public boolean getUsesProxy(){
@@ -130,7 +125,7 @@ public class Descriptor {
 	public boolean usesDebug(){
 		return this.usesDebug;
 	}
-	
+
 	public void setDebug(){
 		this.usesDebug = true;
 	}
@@ -138,31 +133,31 @@ public class Descriptor {
 	public boolean getPozo(){
 		return this.usesPozos;
 	}
-	
+
 	public void setPozo(){
 		this.usesPozos = true;
 	}
-	
+
 	public String getFilePozo(){
 		return this.filePozos;
 	}
-	
+
 	public void setFilePozo(String path){
 		this.filePozos = path;
 	}
-	
+
 	public boolean getMultilang(){
 		return this.usesMultilang;
 	}
-	
+
 	public void setMultilang(){
 		this.usesMultilang = true;
 	}
-	
+
 	public String getFileMultilang(){
 		return this.fileMultilang;
 	}
-	
+
 	public void setFileMultilang(String path){
 		this.fileMultilang = path;
 	}
@@ -183,7 +178,7 @@ public class Descriptor {
 	public synchronized void revivo() {
 		this.cantHilosFinalizados--;
 	}
-	
+
 	public synchronized int estadoHilos() {
 		return this.cantHilosFinalizados;
 	}

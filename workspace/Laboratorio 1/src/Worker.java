@@ -18,27 +18,28 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.JOptionPane;
-
 class Worker { 
 
 	private String host = null;
 	private Pair<Integer,String> urlAProcesar;
-
+	private boolean persist = false;
 	private String path = null;
-	private int port = 80;
+	private int port;
 	private Socket socket = null;
 	private BufferedWriter out = null;
 	private BufferedReader in = null;
 	private Descriptor descriptor = null;
 
-	public Worker (Pair<Integer, String> actual) {
-		this.urlAProcesar = actual;
+
+	public Worker () {
+
 	}
 
-	public void abrirSocket() throws IOException  {
+	public void initWorker(Pair<Integer, String> actual) {
+		this.urlAProcesar = actual;
+		URL url = null;
 		try {
-			URL url = null;
+			//Si usa proxy, la URL entera pasa a ser el Path.
 			if (this.descriptor.getUsesProxy()) {
 				url = new URL(this.descriptor.getProxy());
 				this.path = urlAProcesar.getUrl();
@@ -47,17 +48,37 @@ class Worker {
 				this.path = url.getPath();
 			}
 
-			this.host = url.getHost();
-			if (url.getPort() != -1) {
-				this.port = url.getPort();
+			if (this.descriptor.isPersistent()) {
+				if (url.getHost().equalsIgnoreCase(this.host)) {
+					persist = (url.getPort() != -1) ? (url.getPort() == this.port) : (80 == this.port);
+				} else {
+					persist = false;
+				}
 			}
 
-			this.socket = new Socket(this.host, this.port);
-			if (descriptor.usesDebug()){
-				System.out.println("[debug] Abro la conexion al host:[" + this.host + "] puerto:[" + this.port + "].");
+			if (!persist) {
+				this.host = url.getHost();		
+				this.port = (url.getPort() != -1) ? url.getPort() : 80;
 			}
+			
 		} catch (MalformedURLException e) {
+			//No debería llegar nunca a entrar acá ya que todas las URL que trabajo me aseguro que tengan protocolo, lo controlo por programación defensiva.
 			System.err.println("Error. La url a procesar no tiene un protocolo válido. Error Original: " + e.getMessage());
+		}
+	}
+
+	/*
+	 * Verifica si es persistente y no cambie de host, utiliza la misma conexion, en caso contrario cierra la conexion activa y crea una nueva
+	 */
+	public void abrirSocket() throws IOException  {
+		try {
+			if (!this.descriptor.isPersistent() || !this.persist) {
+				close();
+				this.socket = new Socket(this.host, this.port);
+				if (descriptor.usesDebug()){
+					System.out.println("[debug] Abro la conexion al host:[" + this.host + "] puerto:[" + this.port + "].");
+				}
+			} 			
 		} catch (UnknownHostException e) {
 			System.err.println("Error. No se reconoce el Host:[" + this.host + "].");
 		} catch (IllegalArgumentException e) {
@@ -65,39 +86,29 @@ class Worker {
 		}
 	}
 
-	public Descriptor getDescriptor() {
-		return descriptor;
-	}
-
 	public void setDescriptor(Descriptor descriptor) {
 		this.descriptor = descriptor;
 	}
 
 	public void doJob() throws UnsupportedEncodingException, IOException {
-		abrirSocket();
+		abrirSocket(); 
 		HTTPGet();
 		String response = HTTPResponse();
-		close(); //Cierro solo si no uso
-
-		//Cierro el Socket antes de procesar la respuesta. No hay necesidad de mantenerlo abierto.
 		procesarRespuesta(response);
-
-
-
 	}
 
 	public void HTTPGet() throws UnsupportedEncodingException, IOException {
 		out = new BufferedWriter(
 				new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
 		String httpGet = "GET " + this.path;
-		if (getDescriptor().isHTTP11()) {
+		if (this.descriptor.isPersistent()) {
 			httpGet += " HTTP/1.1";
 		} else {
 			httpGet += " HTTP/1.0";
 		}
 		httpGet += "\r\n";
 
-		httpGet +="Accept: text/plain, text/html, text/*\r\n";
+		httpGet +="Accept: text/html\r\n";
 		httpGet +="Host: " + host + ":" + port + "\r\n";
 		httpGet +="\r\n";
 
@@ -110,8 +121,6 @@ class Worker {
 			System.out.println("[debug] " + httpGet);
 			System.out.println("[debug] Fin del mensaje");
 		}
-
-
 
 		out.flush();
 
@@ -140,13 +149,23 @@ class Worker {
 		return response;
 	}
 
+	/*
+	 * Cierra la conexión siempre y cuando sea distinto de null (Se haya activado en algun momento)
+	 */
 	public void close() throws IOException {
-		out.close();
-		in.close();
-		socket.close();
-		if (this.descriptor.usesDebug()) {
-			System.out.println("[debug] Cierro conexion con host:[" + this.host + "] puerto:[" + this.port + "].");
+		if (out != null) {
+			out.close();
 		}
+		if (in != null) {
+			in.close();
+		}
+		if (socket != null) {
+			socket.close();
+			if (this.descriptor.usesDebug()) {
+				System.out.println("[debug] Cierro conexion con host:[" + this.host + "] puerto:[" + this.port + "].");
+			}
+		}		
+		
 	}
 
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
@@ -163,10 +182,8 @@ class Worker {
 	}
 
 	public void procesarRespuesta(String response) {
-		//TODO: Procesar la respuesta bien.
 		//Obtengo el codigo de respuesta, si es 200 esta todo bien, sino hacemos algo
 		String statusCode = response.substring(9,12);
-		//JOptionPane.showMessageDialog(null, statusCode);
 
 		int indiceContentType = 0; //donde arranca el content type
 		indiceContentType = response.indexOf("Content-Type");
@@ -174,9 +191,6 @@ class Worker {
 		//obtengo el content type, proceso solo si es un html
 		String contenttype = response.substring(indiceContentType + 14, indiceContentType + 23);
 		//if(contenttype.equals("text/html"))
-		//JOptionPane.showMessageDialog(null, contenttype);
-
-
 
 		//----------------------OBTENGO LOS EMAILS-----------------------------------------------------------------------------//
 		Iterator<String> iter = getEmails(response).iterator();
@@ -204,30 +218,12 @@ class Worker {
 				System.err.println("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
 			}
 		}
-	
+
 		for (int i = 0; i < cantLinks; i++){
 			String link = links.elementAt(i).link;
 
-			if(link.contains("#")){
-				//No me importan las Reference. Es la misma URL
-				int posNum = link.indexOf("#");
-				link = link.substring(0, posNum);
-			}
+			link = validarLink(link);
 
-			if (!link.contains("/")) {
-				//No tiene nada. Es de la forma index.php
-				link = "/" + link;
-			}
-			if (link.startsWith("/") ) {
-				//No tiene nada. Es de la forma /index.php. Agrego el host que es en la misma pagina.
-				link = this.host + link; //ya tiene path, concateno el host					
-			}
-
-			if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
-				//Verifico que tenga protocolo. Si no lo tiene le agrego por defecto http.
-				link = "http://" + link;
-			}
-			
 			boolean error = false;
 			URL url = null;
 			try {
@@ -248,7 +244,7 @@ class Worker {
 				error = true;
 				System.err.println("Error inesperado en url");
 			}
-			
+
 
 			//controlo existencia, si no existe, agrego
 			if (!error) {
@@ -266,7 +262,7 @@ class Worker {
 		if (this.descriptor.usesDebug()){
 			System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
 		}
-		
+
 		//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
 		//Si no tiene este tag, esta en uno solo
 		if(this.descriptor.getMultilang() && response.contains("Content-language")){	 
@@ -279,8 +275,37 @@ class Worker {
 			catch (IOException e){
 				System.err.println("No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
 			}
-			
+
 		}
 
+	}
+	
+	private String validarLink (String link) {
+		if(link.contains("#")){
+			//No me importan las Reference. Es la misma URL
+			int posNum = link.indexOf("#");
+			link = link.substring(0, posNum);
+		}
+		if (link.startsWith("//")) {
+			//Wikipedia es una hija de puta. Tiene links de la forma //es.wikipedia.org
+			link = link.substring(2);
+		}
+				
+		if (!(link.contains("www") || link.contains(".com") || link.contains(".org") || link.contains(".edu") || link.contains(".net")))  {
+			//No tiene nada. Es de la forma index.php
+			if (!link.startsWith("/")) {
+				link = "/" + link;
+			}
+		}
+		if (link.startsWith("/")) {
+			//No tiene nada. Es de la forma /index.php. Agrego el host que es en la misma pagina.
+			link = this.host + link; //ya tiene path, concateno el host					
+		}
+
+		if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
+			//Verifico que tenga protocolo. Si no lo tiene le agrego por defecto http.
+			link = "http://" + link;
+		}
+		return link;
 	}
 } 

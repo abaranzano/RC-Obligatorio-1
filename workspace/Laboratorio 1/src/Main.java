@@ -53,7 +53,7 @@ public class Main {
 			}
 
 			if(cmdLine.hasOption("persistent")){
-				descriptor.setHTTP11(true);
+				descriptor.setPersistent(true);
 			}
 
 			if(cmdLine.hasOption("pozos")){
@@ -95,7 +95,7 @@ public class Main {
 
 		if (descriptor.usesDebug()){
 			System.out.println("[debug] Parametros del Descriptor.");
-			System.out.println("[debug] depth:[" + descriptor.getProfundidadMaxima() + "] persistent:[" + descriptor.isHTTP11() + 
+			System.out.println("[debug] depth:[" + descriptor.getProfundidadMaxima() + "] persistent:[" + descriptor.isPersistent() + 
 					"] pozos:[" + descriptor.getPozo() + "|" + descriptor.getFilePozo() + 
 					"] multilang:[" + descriptor.getMultilang() + "] p:[" + descriptor.getCantHilos() + 
 					"] prx:[" + descriptor.getUsesProxy() + "|" + descriptor.getProxy() + "]");
