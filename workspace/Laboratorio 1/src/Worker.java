@@ -90,7 +90,7 @@ class Worker {
 		this.descriptor = descriptor;
 	}
 
-	public void doJob() throws UnsupportedEncodingException, IOException {
+	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException {
 		abrirSocket(); 
 		HTTPGet();
 		String response = HTTPResponse();
@@ -126,12 +126,26 @@ class Worker {
 
 	}
 
-	public String HTTPResponse() throws IOException {
+	public String HTTPResponse() throws IOException, TimeoutException {
 		in = new BufferedReader(
 				new InputStreamReader(socket.getInputStream()));
 		String line;
 
 		String response = "";	//con null, lo toma como string y lo concatena al principio
+		int timeout = 0;
+		while (!in.ready()) {
+			try {
+				Thread.sleep(1000);
+				timeout++;
+				System.err.println("Tiempo esperado:[" + timeout + "] Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
+				if (timeout > 30) {
+					throw new TimeoutException("Timeout esperando por la respuesta. Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
+				}
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		while ((line = in.readLine()) != null) {
 			response += line + "\n";
 			//System.out.println(line);
@@ -183,115 +197,121 @@ class Worker {
 
 	public void procesarRespuesta(String response) {
 		//Obtengo el codigo de respuesta, si es 200 esta todo bien, sino hacemos algo
-		String statusCode = response.substring(9,12);
-		int indiceContentType = 0; //donde arranca el content type
-		indiceContentType = response.indexOf("Content-Type");
+		String statusCode = null;
+		try {
+		statusCode = response.substring(9,12);
+		} catch (StringIndexOutOfBoundsException e) {
+			System.err.println("Error:" + response + "Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
+		}
+		//		int indiceContentType = 0; //donde arranca el content type
+		//		indiceContentType = response.indexOf("Content-Type");
 		//obtengo el content type, proceso solo si es un html
-		String contenttype = response.substring(indiceContentType + 14, indiceContentType + 23);
+		//		String contenttype = response.substring(indiceContentType + 14, indiceContentType + 23);
 
-		if(contenttype.equals("text/html")) { 
-
-
-			if(statusCode.equals("200")) {
-
-				//----------------------OBTENGO LOS EMAILS-----------------------------------------------------------------------------//
-				Iterator<String> iter = getEmails(response).iterator();
-				while(iter.hasNext()) {
-					//JOptionPane.showMessageDialog(null, iter.next());
-					String mail = iter.next();
-					this.descriptor.addMail(mail);
-					System.out.println("MAIL: " + mail);
-				}
-				//---------------------------------------------------------------------------------------------------------------------//
-
-				//-------------------------------OBTENGO LOS LINKS --------------------------------------------------------------------//
-				HtmlExtractor htmlExtractor = new HtmlExtractor();
-				Vector<HtmlLink> links = htmlExtractor.grabHTMLLinks(response);
-
-				int cantLinks = links.size();
-				if (cantLinks == 0 && this.descriptor.getPozo()) {
-					File archivo = new File(this.descriptor.getFilePozo());	//Pasarle la Ruta relativa dentro del proyecto
-					try {
-						FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
-						fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
-						fw.close();
-					} catch (IOException e) {
-						System.err.println("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
-					}
-				}
-
-				for (int i = 0; i < cantLinks; i++) {
-					String link = links.elementAt(i).link;
-
-					link = validarLink(link);
-
-					boolean error = false;
-					URL url = null;
-					try {
-						url = new URL(link);
-						try {
-							if (url.getPath() == null || url.getPath().isEmpty() || "".equalsIgnoreCase(url.getPath())) {
-								//No tiene path. Lo agrego.
-								link = link + "/";
-								url = new URL(link);
-							}
-							url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
-						} catch (URISyntaxException e) {
-							error = true;
-							System.err.println("No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
-						}
-					} catch (MalformedURLException e) {
-						//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
-						error = true;
-						System.err.println("Error inesperado en url");
-					}
+		//		if(contenttype.equals("text/html")) { 
 
 
-					//controlo existencia, si no existe, agrego
-					if (!error) {
-						if(!this.descriptor.getLinks().containsKey(link)) {				
-							this.descriptor.addLink(link); //como es un hash si existe no lo agrega
+		if(statusCode.equals("200")) {
 
-							this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
-							System.out.println("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.host + this.path + " AGREGO: " + link);
-						}
-					}
+			//----------------------OBTENGO LOS EMAILS-----------------------------------------------------------------------------//
+			Iterator<String> iter = getEmails(response).iterator();
+			while(iter.hasNext()) {
+				//JOptionPane.showMessageDialog(null, iter.next());
+				String mail = iter.next();
+				this.descriptor.addMail(mail);
+				System.out.println("MAIL: " + mail);
+			}
+			//---------------------------------------------------------------------------------------------------------------------//
 
+			//-------------------------------OBTENGO LOS LINKS --------------------------------------------------------------------//
+			HtmlExtractor htmlExtractor = new HtmlExtractor();
+			Vector<HtmlLink> links = htmlExtractor.grabHTMLLinks(response);
 
-				}
-
-				if (this.descriptor.usesDebug()) {
-					System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
-				}
-
-				//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
-				//Si no tiene este tag, esta en uno solo
-				if(this.descriptor.getMultilang() && response.contains("Content-language")) {	 
-					File archivo = new File(this.descriptor.getFileMultilang());	//Pasarle la Ruta relativa dentro del proyecto
-					try{
-						FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
-						fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
-						fw.close();
-					}
-					catch (IOException e){
-						System.err.println("No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
-					}
-
-				}
-			} else {	//Status Code <> 200
-				if(statusCode.equals("301") || statusCode.equals("302") || statusCode.equals("303")) {	//Considero link de redireccion
-					int posLocation = response.indexOf("Location");
-					String link = response.substring(posLocation + 10);
-					if(!this.descriptor.getLinks().containsKey(link)) {				
-						this.descriptor.addLink(link); //como es un hash si existe no lo agrega
-						this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
-					}
-				} else {
-					System.err.println("Error: se recibio status code " + statusCode);
+			int cantLinks = links.size();
+			if (cantLinks == 0 && this.descriptor.getPozo()) {
+				File archivo = new File(this.descriptor.getFilePozo());	//Pasarle la Ruta relativa dentro del proyecto
+				try {
+					FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
+					fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
+					fw.close();
+				} catch (IOException e) {
+					System.err.println("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
 				}
 			}
-			//text/html
+
+			for (int i = 0; i < cantLinks; i++) {
+				String link = links.elementAt(i).link;
+
+				link = validarLink(link);
+
+				boolean error = false;
+				URL url = null;
+				try {
+					url = new URL(link);
+					try {
+						if (url.getPath() == null || url.getPath().isEmpty() || "".equalsIgnoreCase(url.getPath())) {
+							//No tiene path. Lo agrego.
+							link = link + "/";
+							url = new URL(link);
+						}
+						url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
+					} catch (URISyntaxException e) {
+						error = true;
+						System.err.println("No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
+					}
+				} catch (MalformedURLException e) {
+					//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
+					error = true;
+					System.err.println("Error inesperado en url");
+				}
+
+
+				//controlo existencia, si no existe, agrego
+				if (!error) {
+					if(!this.descriptor.getLinks().containsKey(link)) {				
+						this.descriptor.addLink(link); //como es un hash si existe no lo agrega
+
+						this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
+						System.out.println("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.host + this.path + " AGREGO: " + link);
+					}
+				}
+
+
+			}
+
+			if (this.descriptor.usesDebug()) {
+				System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
+			}
+
+			//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
+			//Si no tiene este tag, esta en uno solo
+			if(this.descriptor.getMultilang() && response.contains("Content-language")) {	 
+				File archivo = new File(this.descriptor.getFileMultilang());	//Pasarle la Ruta relativa dentro del proyecto
+				try{
+					FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
+					fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
+					fw.close();
+				}
+				catch (IOException e){
+					System.err.println("No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
+				}
+
+			}
+		} else {	//Status Code <> 200
+			if(statusCode.equals("301") || statusCode.equals("302") || statusCode.equals("303")) {	//Considero link de redireccion
+				int posLocation = response.indexOf("Location");
+				String link = response.substring(posLocation + 10);
+				link = link.split("\n")[0];
+				if(!this.descriptor.getLinks().containsKey(link)) {				
+					this.descriptor.addLink(link); //como es un hash si existe no lo agrega
+					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
+				}
+			} else {
+				System.err.println("Error: se recibio status code " + statusCode);
+			}
 		}
+		//text/html
+		//		}
 	}
 
 	private String validarLink (String link) {
