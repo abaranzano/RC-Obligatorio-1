@@ -143,6 +143,7 @@ class Worker {
 	public void close() throws IOException {
 		out.close();
 		in.close();
+		socket.close();
 		if (this.descriptor.usesDebug()) {
 			System.out.println("[debug] Cierro conexion con host:[" + this.host + "] puerto:[" + this.port + "].");
 		}
@@ -203,6 +204,7 @@ class Worker {
 				System.err.println("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
 			}
 		}
+	
 		for (int i = 0; i < cantLinks; i++){
 			String link = links.elementAt(i).link;
 
