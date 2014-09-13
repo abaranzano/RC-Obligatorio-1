@@ -191,17 +191,23 @@ class Worker {
 		HtmlExtractor htmlExtractor = new HtmlExtractor();
 		Vector<HtmlLink> links = htmlExtractor.grabHTMLLinks(response);
 
-		int cantLiknks = links.size();
-//		if (this.descriptor.getCanthijosAProcesar() != -1){
-//			if (cantLiknks > this.descriptor.getCanthijosAProcesar()) {
-//				cantLiknks = this.descriptor.getCanthijosAProcesar();
-//			}
-//		}
-
-		for (int i = 0; i <cantLiknks; i++){
+		int cantLinks = links.size();
+		if (cantLinks == 0 && this.descriptor.getPozo()) {
+			File archivo = new File(this.descriptor.getFilePozo());	//Pasarle la Ruta relativa dentro del proyecto
+			try{
+				FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
+				fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
+				fw.close();
+			}
+			catch (IOException e){
+				System.err.println("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
+			}
+		}
+		for (int i = 0; i < cantLinks; i++){
 			String link = links.elementAt(i).link;
 
 			if(link.contains("#")){
+				//No me importan las Reference. Es la misma URL
 				int posNum = link.indexOf("#");
 				link = link.substring(0, posNum);
 			}

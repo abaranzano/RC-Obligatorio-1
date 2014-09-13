@@ -56,6 +56,8 @@ public class Descriptor {
 				if (aProcesar.get(0).getDepth() < profundidadMaxima) {
 					ret = aProcesar.get(0);
 					aProcesar.remove(0);
+				} else {
+					aProcesar.remove(0);
 				}
 			} else {
 				ret = aProcesar.get(0);
