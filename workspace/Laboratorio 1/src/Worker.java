@@ -97,7 +97,6 @@ class Worker {
 
 		out.flush();
 
-
 	}
 
 	public String HTTPResponse() throws IOException, TimeoutException {
