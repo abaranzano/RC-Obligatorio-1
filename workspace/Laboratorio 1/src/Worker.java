@@ -10,7 +10,6 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -22,7 +21,8 @@ class Worker {
 
 	private String host = null;
 	private Pair<Integer,String> urlAProcesar;
-	private boolean persist = false;
+	//	private boolean persist = false;
+	private boolean connectionClosed = false; //Cuando el servidor manda un Connection: close. No puedo asumir persistencia
 	private String path = null;
 	private int port;
 	private Socket socket = null;
@@ -48,18 +48,9 @@ class Worker {
 				this.path = url.getPath();
 			}
 
-			if (this.descriptor.isPersistent()) {
-				if (url.getHost().equalsIgnoreCase(this.host)) {
-					persist = (url.getPort() != -1) ? (url.getPort() == this.port) : (80 == this.port);
-				} else {
-					persist = false;
-				}
-			}
+			this.host = url.getHost();		
+			this.port = (url.getPort() != -1) ? url.getPort() : 80;
 
-			if (!persist) {
-				this.host = url.getHost();		
-				this.port = (url.getPort() != -1) ? url.getPort() : 80;
-			}
 
 		} catch (MalformedURLException e) {
 			//No debería llegar nunca a entrar acá ya que todas las URL que trabajo me aseguro que tengan protocolo, lo controlo por programación defensiva.
@@ -67,39 +58,23 @@ class Worker {
 		}
 	}
 
-	/*
-	 * Verifica si es persistente y no cambie de host, utiliza la misma conexion, en caso contrario cierra la conexion activa y crea una nueva
-	 */
-	public void abrirSocket() throws IOException  {
-		try {
-			if (!this.descriptor.isPersistent() || !this.persist) {
-				close();
-				this.socket = new Socket(this.host, this.port);
-				if (descriptor.usesDebug()){
-					System.out.println("[debug] Abro la conexion al host:[" + this.host + "] puerto:[" + this.port + "].");
-				}
-			} 			
-		} catch (UnknownHostException e) {
-			System.err.println("Error. No se reconoce el Host:[" + this.host + "].");
-		} catch (IllegalArgumentException e) {
-			System.err.println("Error. El puerto:[" + this.port + "] es inválido.");
-		}
-	}
-
 	public void setDescriptor(Descriptor descriptor) {
 		this.descriptor = descriptor;
 	}
 
-	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException {
-		abrirSocket(); 
+	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException { 
+		this.socket = this.descriptor.getConnection(this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
 		HTTPGet();
 		String response = HTTPResponse();
 		procesarRespuesta(response);
+		this.descriptor.connectionClose(this.socket, this.descriptor.isPersistent() && !connectionClosed);
 	}
 
 	public void HTTPGet() throws UnsupportedEncodingException, IOException {
+
 		out = new BufferedWriter(
 				new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
+
 		String httpGet = "GET " + this.path;
 		if (this.descriptor.isPersistent()) {
 			httpGet += " HTTP/1.1";
@@ -112,8 +87,6 @@ class Worker {
 		httpGet +="Host: " + host + ":" + port + "\r\n";
 		httpGet +="\r\n";
 
-		//httpGet += "\n";
-
 		out.write(httpGet);
 
 		if (descriptor.usesDebug()){
@@ -124,11 +97,15 @@ class Worker {
 
 		out.flush();
 
+
 	}
 
 	public String HTTPResponse() throws IOException, TimeoutException {
+
 		in = new BufferedReader(
 				new InputStreamReader(socket.getInputStream()));
+
+
 		String line;
 
 		String response = "";	//con null, lo toma como string y lo concatena al principio
@@ -146,10 +123,12 @@ class Worker {
 				e.printStackTrace();
 			}
 		}
+
 		while ((line = in.readLine()) != null) {
 			response += line + "\n";
 			//System.out.println(line);
-		}		
+		}	
+
 
 		//creo un archivo que ocntiene el responde de la pag
 		//el archivo queda almacenado en la carpeta Labratorio 1 del proyecto con nombre archivo, el nombre del host procesado
@@ -199,10 +178,12 @@ class Worker {
 		//Obtengo el codigo de respuesta, si es 200 esta todo bien, sino hacemos algo
 		String statusCode = null;
 		try {
-		statusCode = response.substring(9,12);
+			statusCode = response.substring(9,12);
 		} catch (StringIndexOutOfBoundsException e) {
 			System.err.println("Error:" + response + "Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
 		}
+
+		connectionClosed = (response.indexOf("Connection: Close") != -1) ? true : false;
 		//		int indiceContentType = 0; //donde arranca el content type
 		//		indiceContentType = response.indexOf("Content-Type");
 		//obtengo el content type, proceso solo si es un html

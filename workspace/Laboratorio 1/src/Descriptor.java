@@ -1,3 +1,5 @@
+import java.io.IOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,11 +22,13 @@ public class Descriptor {
 	private String fileMultilang;
 	private int cantHilos = 1;
 	private int cantHilosFinalizados = 1; //Empieza en la misma cantidad que los Hilos por que el "revivo" resta.
+	private ConnectionManager connectionManager = null;
 
 	public Descriptor() {
 		this.links = new HashMap<String,String>();
 		this.mails = new ArrayList<String>();
 		this.aProcesar = new ArrayList<Pair<Integer, String>>();
+		this.connectionManager = new ConnectionManager();
 	}
 
 	public synchronized void agregarURL(Integer profundidad, String url) {
@@ -187,5 +191,11 @@ public class Descriptor {
 		return this.aProcesar.size();
 	}
 
-
+	public synchronized Socket getConnection(String host, int port, boolean keepAlive) throws IOException {
+		return connectionManager.getConnection(host, port, keepAlive);
+	}
+	
+	public synchronized void connectionClose(Socket conn, boolean keepAlive) throws IOException {
+		connectionManager.connectionClose(conn, keepAlive);
+	}
 }
