@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import javax.swing.JOptionPane;
 
 class Worker { 
 
@@ -99,7 +102,7 @@ class Worker {
 
 	public void HTTPGet() throws UnsupportedEncodingException, IOException {
 		out = new BufferedWriter(
-				new OutputStreamWriter(socket.getOutputStream(), "UTF8"));
+				new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
 		String httpGet = "GET " + this.path;
 		if (this.descriptor.isPersistent()) {
 			httpGet += " HTTP/1.1";
@@ -129,8 +132,10 @@ class Worker {
 	public String HTTPResponse() throws IOException, TimeoutException {
 		in = new BufferedReader(
 				new InputStreamReader(socket.getInputStream()));
+		
 		String line;
-
+		
+		//String response = new String();
 		String response = "";	//con null, lo toma como string y lo concatena al principio
 		int timeout = 0;
 		while (!in.ready()) {
@@ -146,17 +151,69 @@ class Worker {
 				e.printStackTrace();
 			}
 		}
-		while ((line = in.readLine()) != null) {
+		
+		//Leer el Header hasta que encontramos /r/n/r/n
+		line = in.readLine();
+		while (line != null && line.length() != 0) { 
 			response += line + "\n";
+			line = in.readLine();
+			System.out.println(line);
 			//System.out.println(line);
 		}		
-
+		
 		//creo un archivo que ocntiene el responde de la pag
 		//el archivo queda almacenado en la carpeta Labratorio 1 del proyecto con nombre archivo, el nombre del host procesado
 		File archivo=new File(host + ".txt");
 		FileWriter escribir=new FileWriter(archivo,true);
-		//Escribimos en el archivo con el metodo write
-		escribir.write(response);
+		
+		if(!this.descriptor.isPersistent()){	//Es HTTP 1.0. El socket se cierra y el Buffer termina con null. Puede leerse sin problemas
+
+		line = in.readLine();
+		while (line != null) {  //line.length() > 0
+			response += line + "\n";
+			//Escribimos en el archivo con el metodo write
+			escribir.write(line);
+			line = in.readLine();
+			System.out.println(line);
+			//System.out.println(line);
+		}		
+
+		}
+		else {	//Es persistent. Puede pasar que venga el conente-length y leemeos hasta ahi, o Transfer Encodign: chunked y leemos de a partes
+			if(response.contains("Transfer-Encoding: chunked")){
+
+				line = in.readLine();	//bytes del primer chunk
+				int bytesChunk = Integer.parseInt(line, 16);
+				boolean salir = false;
+				while(!salir){ //bytesChunk != 0  TODO
+					int bytesLeidos = 0;
+					while(bytesLeidos < bytesChunk){
+						byte[] b = in.readLine().getBytes();
+						bytesLeidos++;
+						line = new String (b, "UTF-8");
+						response += line;
+						int bytesLinea = b.length;
+						if (bytesLinea != 0){
+							bytesLeidos += b.length;
+						}
+						//System.out.println(line);
+						//System.out.println("Bytes Linea " + bytesLinea);
+						//System.out.println();
+						//escribir.write(line + "\n");
+					}
+					byte[] b = in.readLine().getBytes();
+					line = new String (b, "UTF-8");
+					if (line.isEmpty())
+						salir = true;
+					else
+						bytesChunk = Integer.parseInt(line, 16);
+					
+				}	
+
+			}	//Chunked
+			
+		}	//Es persistent
+		
 		//Cerramos la conexion
 		escribir.close();
 
