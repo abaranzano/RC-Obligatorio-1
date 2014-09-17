@@ -26,8 +26,6 @@ class Worker {
 	private String path = null;
 	private int port;
 	private Socket socket = null;
-	private BufferedWriter out = null;
-	private BufferedReader in = null;
 	private Descriptor descriptor = null;
 	private long id = 0;
 
@@ -67,15 +65,22 @@ class Worker {
 		this.socket = this.descriptor.getConnection(this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
 		HTTPGet();
 		String response = HTTPResponse();
+		//creo un archivo que ocntiene el responde de la pag
+		//el archivo queda almacenado en la carpeta Labratorio 1 del proyecto con nombre archivo, el nombre del host procesado
+		File archivo=new File(host + ".txt");
+		FileWriter escribir=new FileWriter(archivo,true);
+		escribir.write(response);
+		//Cerramos la conexion
+		escribir.close();
 		procesarRespuesta(response);
 		this.descriptor.connectionClose(this.socket, this.descriptor.isPersistent() && !connectionClosed);
 	}
 
 	public void HTTPGet() throws UnsupportedEncodingException, IOException {
 
-		out = new BufferedWriter(
+		BufferedWriter out = new BufferedWriter(
 				new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
-
+		
 		String httpGet = "GET " + this.path;
 		if (this.descriptor.isPersistent()) {
 			httpGet += " HTTP/1.1";
@@ -89,17 +94,19 @@ class Worker {
 		httpGet +="\r\n";
 
 		out.write(httpGet);
-
+		out.flush();
+		
+		//		out.println(httpGet);
 		Log.debug("Se envio el siguiente mensaje: \n" + 
 				httpGet + "\n" + "Fin del mensaje");
 
-		out.flush();
+
 
 	}
 
 	public String HTTPResponse() throws IOException, TimeoutException {
 
-		in = new BufferedReader(
+		BufferedReader in = new BufferedReader(
 				new InputStreamReader(socket.getInputStream()));
 
 		String line;
@@ -131,10 +138,7 @@ class Worker {
 		}	
 
 
-		//creo un archivo que ocntiene el responde de la pag
-		//el archivo queda almacenado en la carpeta Labratorio 1 del proyecto con nombre archivo, el nombre del host procesado
-		File archivo=new File(host + ".txt");
-		FileWriter escribir=new FileWriter(archivo,true);
+
 
 		if(!this.descriptor.isPersistent()){	//Es HTTP 1.0. El socket se cierra y el Buffer termina con null. Puede leerse sin problemas
 
@@ -142,7 +146,6 @@ class Worker {
 			while (line != null) {  //line.length() > 0
 				response += line + "\n";
 				//Escribimos en el archivo con el metodo write
-				escribir.write(line);
 				line = in.readLine();
 				//			System.out.println(line);
 				//System.out.println(line);
@@ -161,7 +164,7 @@ class Worker {
 						byte[] b = in.readLine().getBytes();
 						bytesLeidos++;
 						line = new String (b, "UTF-8");
-						response += line;
+						response += line + "\n";
 						int bytesLinea = b.length;
 						if (bytesLinea != 0){
 							bytesLeidos += b.length;
@@ -184,8 +187,6 @@ class Worker {
 
 		}	//Es persistent
 
-		//Cerramos la conexion
-		escribir.close();
 
 		return response;
 	}
