@@ -131,7 +131,7 @@ class Worker {
 		while (line != null && line.length() != 0) { 
 			response += line + "\n";
 			line = in.readLine();
-			System.out.println(line);
+//			System.out.println(line);
 			//System.out.println(line);
 		}	
 		
@@ -149,7 +149,7 @@ class Worker {
 			//Escribimos en el archivo con el metodo write
 			escribir.write(line);
 			line = in.readLine();
-			System.out.println(line);
+//			System.out.println(line);
 			//System.out.println(line);
 		}		
 
