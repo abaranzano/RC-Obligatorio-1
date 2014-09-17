@@ -101,9 +101,9 @@ class Worker {
 
 		in = new BufferedReader(
 				new InputStreamReader(socket.getInputStream()));
-		
+
 		String line;
-		
+
 		//String response = new String();
 		String response = "";	//con null, lo toma como string y lo concatena al principio
 		int timeout = 0;
@@ -116,37 +116,37 @@ class Worker {
 					throw new TimeoutException("Timeout esperando por la respuesta. Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
 				}
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				//No debería entrar nunca acá, los hilos no los interrumpimos nunca.
+				Log.error("Error inesperado. Error Original: " + e.getMessage());
 			}
 		}
-		
+
 		//Leer el Header hasta que encontramos /r/n/r/n
 		line = in.readLine();
 		while (line != null && line.length() != 0) { 
 			response += line + "\n";
 			line = in.readLine();
-//			System.out.println(line);
+			//			System.out.println(line);
 			//System.out.println(line);
 		}	
-		
+
 
 		//creo un archivo que ocntiene el responde de la pag
 		//el archivo queda almacenado en la carpeta Labratorio 1 del proyecto con nombre archivo, el nombre del host procesado
 		File archivo=new File(host + ".txt");
 		FileWriter escribir=new FileWriter(archivo,true);
-		
+
 		if(!this.descriptor.isPersistent()){	//Es HTTP 1.0. El socket se cierra y el Buffer termina con null. Puede leerse sin problemas
 
-		line = in.readLine();
-		while (line != null) {  //line.length() > 0
-			response += line + "\n";
-			//Escribimos en el archivo con el metodo write
-			escribir.write(line);
 			line = in.readLine();
-//			System.out.println(line);
-			//System.out.println(line);
-		}		
+			while (line != null) {  //line.length() > 0
+				response += line + "\n";
+				//Escribimos en el archivo con el metodo write
+				escribir.write(line);
+				line = in.readLine();
+				//			System.out.println(line);
+				//System.out.println(line);
+			}		
 
 		}
 		else {	//Es persistent. Puede pasar que venga el conente-length y leemeos hasta ahi, o Transfer Encodign: chunked y leemos de a partes
@@ -177,36 +177,17 @@ class Worker {
 						salir = true;
 					else
 						bytesChunk = Integer.parseInt(line, 16);
-					
+
 				}	
 
 			}	//Chunked
-			
+
 		}	//Es persistent
-		
+
 		//Cerramos la conexion
 		escribir.close();
 
 		return response;
-	}
-
-	/*
-	 * Cierra la conexión siempre y cuando sea distinto de null (Se haya activado en algun momento)
-	 */
-	public void close() throws IOException {
-		if (out != null) {
-			out.close();
-		}
-		if (in != null) {
-			in.close();
-		}
-		if (socket != null) {
-			socket.close();
-
-			Log.debug("Cierro conexion con host:[" + this.host + "] puerto:[" + this.port + "].");
-
-		}		
-
 	}
 
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
@@ -232,6 +213,7 @@ class Worker {
 		}
 
 		connectionClosed = (response.indexOf("Connection: Close") != -1) ? true : false;
+		Log.debug("La conexion con Host:[" + this.host + "] Port:[" + this.port + "] se cerrará a pedido del Servidor (Connection: close encontrado en el Header)");
 		//		int indiceContentType = 0; //donde arranca el content type
 		//		indiceContentType = response.indexOf("Content-Type");
 		//obtengo el content type, proceso solo si es un html
@@ -239,7 +221,7 @@ class Worker {
 
 		//		if(contenttype.equals("text/html")) { 
 
-
+		Log.debug("Procesando Url:[" + urlAProcesar.getUrl() + "] Status Code [" + statusCode + "]");
 		if(statusCode.equals("200")) {
 
 			//----------------------OBTENGO LOS EMAILS-----------------------------------------------------------------------------//
@@ -258,6 +240,7 @@ class Worker {
 
 			int cantLinks = links.size();
 			if (cantLinks == 0 && this.descriptor.getPozo()) {
+				Log.debug("Se encontró un pozo en URL[: " + this.urlAProcesar.getUrl() + "]");
 				File archivo = new File(this.descriptor.getFilePozo());	//Pasarle la Ruta relativa dentro del proyecto
 				try {
 					FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
@@ -302,19 +285,18 @@ class Worker {
 
 						this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
 						Log.console("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.host + this.path + " AGREGO: " + link);
+					} else {
+						Log.debug("La url:[" + link + "] ya fue procesada. No se agrega a la lista de datos a procesar");
 					}
 				}
 
 
 			}
 
-
-			Log.debug("Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
-
-
 			//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
 			//Si no tiene este tag, esta en uno solo
 			if(this.descriptor.getMultilang() && response.contains("Content-language")) {	 
+				Log.debug("Se multilenguaje en URL[: " + this.urlAProcesar.getUrl() + "]");
 				File archivo = new File(this.descriptor.getFileMultilang());	//Pasarle la Ruta relativa dentro del proyecto
 				try{
 					FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
@@ -328,6 +310,7 @@ class Worker {
 			}
 		} else {	//Status Code <> 200
 			if(statusCode.equals("301") || statusCode.equals("302") || statusCode.equals("303")) {	//Considero link de redireccion
+				Log.debug("Se encontró redireccionamiento en URL:[" + this.urlAProcesar.getUrl() + "] Se procesará mas adelante");
 				int posLocation = response.indexOf("Location");
 				String link = response.substring(posLocation + 10);
 				link = link.split("\n")[0];
@@ -336,7 +319,7 @@ class Worker {
 					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
 				}
 			} else {
-				Log.error("Error: se recibio status code " + statusCode);
+				Log.error("Error. Se recibio status code " + statusCode);
 			}
 		}
 		//text/html

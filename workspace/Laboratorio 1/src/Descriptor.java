@@ -11,7 +11,6 @@ public class Descriptor {
 	private boolean usesProxy = false;
 	private String proxy = null;
 	private int profundidadMaxima = -1;
-	private int canthijosAProcesar = 2; //esto despues sw puede ir
 	private HashMap<String, String> links = null;
 	private List<String> mails = null;
 	private List<Pair<Integer, String>> aProcesar = null;	
@@ -107,10 +106,6 @@ public class Descriptor {
 
 	public int getProfundidadMaxima(){
 		return this.profundidadMaxima;
-	}
-
-	public int getCanthijosAProcesar(){
-		return this.canthijosAProcesar;
 	}
 
 	public HashMap<String, String> getLinks(){
