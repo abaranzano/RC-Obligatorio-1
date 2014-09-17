@@ -32,11 +32,11 @@ public class ConnectionManager {
 			} else {
 				socket = new Socket(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(host, port)));
 			}
-			System.out.println("[debug] Abro la conexion al host:[" + host + "] puerto:[" + port + "].");
+			Log.debug("Abro la conexion al host:[" + host + "] puerto:[" + port + "].");
 		} catch (UnknownHostException e) {
-			System.err.println("Error. No se reconoce el Host:[" + host + "].");
+			Log.error("Error. No se reconoce el Host:[" + host + "].");
 		} catch (IllegalArgumentException e) {
-			System.err.println("Error. El puerto:[" + port + "] es inválido.");
+			Log.error("Error. El puerto:[" + port + "] es inválido.");
 		}
 		return socket;
 	}
@@ -54,7 +54,7 @@ public class ConnectionManager {
 			if (keepAlive) {
 				cachedConnections.put(conn.getInetAddress().getHostName() + ":" + conn.getPort() , conn);
 			} else {
-				System.out.println("[debug] Cierro conexion con host:[" + conn.getInetAddress().getHostName() + "] puerto:[" + conn.getPort() + "].");
+				Log.debug("Cierro conexion con host:[" + conn.getInetAddress().getHostName() + "] puerto:[" + conn.getPort() + "].");
 				conn.close();				
 			}
 		}

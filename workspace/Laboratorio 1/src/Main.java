@@ -36,18 +36,18 @@ public class Main {
 				descriptor.addLink(cmdLine.getArgs()[0]); //Agrego como procesada, ya que la primera la proceso siempre.
 				descriptor.agregarURL(0, cmdLine.getArgs()[0]);
 			} else {
-				System.err.println("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
+				Log.error("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
 			}
 
 			if(cmdLine.hasOption("d")){
-				descriptor.setDebug();		//Setea en true el debug del descriptor
+				Log.init(); // Setea verbosity en debug.
 			}
 
 			if(cmdLine.hasOption("depth")){
 				try {
 					descriptor.setProfundidadMaxima(Integer.parseInt(cmdLine.getOptionValue("depth")));
 				} catch (NumberFormatException e) {
-					System.err.println("Error en el valor de profundidad. Se utiliza valor por defecto. Error Original: " + e.getMessage());
+					Log.error("Error en el valor de profundidad. Se utiliza valor por defecto. Error Original: " + e.getMessage());
 				}
 
 			}
@@ -70,7 +70,7 @@ public class Main {
 				try {
 					cantidadHilos = Integer.valueOf(cmdLine.getOptionValue("p"));
 				} catch (NumberFormatException e) {
-					System.err.println("Error en el valor de cantidad de hilos. Se utiliza valor por defecto. Error Original: " + e.getMessage());
+					Log.error("Error en el valor de cantidad de hilos. Se utiliza valor por defecto. Error Original: " + e.getMessage());
 				}
 			}
 			if (cmdLine.hasOption("prx")) {
@@ -84,7 +84,7 @@ public class Main {
 			}
 
 		} catch (org.apache.commons.cli.ParseException ex){  
-			System.err.println(ex.getMessage());                  
+			Log.error(ex.getMessage());                  
 		}  
 
 
@@ -93,16 +93,13 @@ public class Main {
 
 		//		while (!salir) {
 
-		if (descriptor.usesDebug()){
-			System.out.println("[debug] Parametros del Descriptor.");
-			System.out.println("[debug] depth:[" + descriptor.getProfundidadMaxima() + "] persistent:[" + descriptor.isPersistent() + 
+		Log.debug("Parametros del Descriptor.\n depth:[" + descriptor.getProfundidadMaxima() + "] persistent:[" + descriptor.isPersistent() + 
 					"] pozos:[" + descriptor.getPozo() + "|" + descriptor.getFilePozo() + 
 					"] multilang:[" + descriptor.getMultilang() + "] p:[" + descriptor.getCantHilos() + 
 					"] prx:[" + descriptor.getUsesProxy() + "|" + descriptor.getProxy() + "]");
-		}
 		for (int i = 0; i < cantidadHilos; i++) { 
 
-			Decorator decoratorInstance = new Decorator();
+			Decorator decoratorInstance = new Decorator(i);
 			decoratorInstance.setDescriptor(descriptor);
 
 			t[i] = new Thread(decoratorInstance);
@@ -113,7 +110,7 @@ public class Main {
 				t[i].join();
 			}
 		} catch (InterruptedException e) {
-			System.err.println("Error al esperar por el fin de un hilo. Se interrumpio la ejecucion. Error Original: " + e.getMessage());
+			Log.error("Error al esperar por el fin de un hilo. Se interrumpio la ejecucion. Error Original: " + e.getMessage());
 		}
 		//			if (descriptor.getAProcesar().size() == 0) {
 		//				//Terminaron todos los hilos y no quedan urls por procesar.

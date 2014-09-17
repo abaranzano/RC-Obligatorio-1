@@ -5,6 +5,11 @@ public class Decorator implements Runnable {
 
 	private Descriptor descriptor = null;
 	private Worker worker = null;
+	private long id = 0; //Thread ID.
+	
+	Decorator(long id) {
+		this.id = id;
+	}
 
 	public void setDescriptor(Descriptor descriptor) {
 		this.descriptor = descriptor;
@@ -17,7 +22,7 @@ public class Decorator implements Runnable {
 	@Override
 	public void run() {
 		boolean salir = false;
-		this.worker = new Worker();
+		this.worker = new Worker(this.id);
 		worker.setDescriptor(this.descriptor);
 		while (!salir) {
 			this.descriptor.revivo();
@@ -27,9 +32,9 @@ public class Decorator implements Runnable {
 					worker.initWorker(actual);					
 					worker.doJob();
 				} catch (IOException e) {
-					System.err.println("Error original: " + e.getMessage());
+					Log.error("Error original: " + e.getMessage());
 				} catch (TimeoutException e) {
-					System.err.println("Error: " + e.getMessage());
+					Log.error("Error: " + e.getMessage());
 				}
 			} 		
 			this.descriptor.finalizo();

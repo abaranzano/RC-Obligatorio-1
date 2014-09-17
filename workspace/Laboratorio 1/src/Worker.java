@@ -29,10 +29,11 @@ class Worker {
 	private BufferedWriter out = null;
 	private BufferedReader in = null;
 	private Descriptor descriptor = null;
+	private long id = 0;
 
 
-	public Worker () {
-
+	Worker (long id) {
+		this.id = id;
 	}
 
 	public void initWorker(Pair<Integer, String> actual) {
@@ -54,7 +55,7 @@ class Worker {
 
 		} catch (MalformedURLException e) {
 			//No debería llegar nunca a entrar acá ya que todas las URL que trabajo me aseguro que tengan protocolo, lo controlo por programación defensiva.
-			System.err.println("Error. La url a procesar no tiene un protocolo válido. Error Original: " + e.getMessage());
+			Log.error("Error. La url a procesar no tiene un protocolo válido. Error Original: " + e.getMessage());
 		}
 	}
 
@@ -89,11 +90,8 @@ class Worker {
 
 		out.write(httpGet);
 
-		if (descriptor.usesDebug()){
-			System.out.println("[debug] Se envio el siguiente mensaje: " );
-			System.out.println("[debug] " + httpGet);
-			System.out.println("[debug] Fin del mensaje");
-		}
+		Log.debug("Se envio el siguiente mensaje: \n" + 
+				httpGet + "\n" + "Fin del mensaje");
 
 		out.flush();
 
@@ -113,7 +111,7 @@ class Worker {
 			try {
 				Thread.sleep(1000);
 				timeout++;
-				System.err.println("Tiempo esperado:[" + timeout + "] Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
+				Log.error("Tiempo esperado:[" + timeout + "] Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
 				if (timeout > 30) {
 					throw new TimeoutException("Timeout esperando por la respuesta. Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
 				}
@@ -153,9 +151,9 @@ class Worker {
 		}
 		if (socket != null) {
 			socket.close();
-			if (this.descriptor.usesDebug()) {
-				System.out.println("[debug] Cierro conexion con host:[" + this.host + "] puerto:[" + this.port + "].");
-			}
+
+			Log.debug("Cierro conexion con host:[" + this.host + "] puerto:[" + this.port + "].");
+
 		}		
 
 	}
@@ -179,7 +177,7 @@ class Worker {
 		try {
 			statusCode = response.substring(9,12);
 		} catch (StringIndexOutOfBoundsException e) {
-			System.err.println("Error:" + response + "Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
+			Log.error("Error:" + response + "Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
 		}
 
 		connectionClosed = (response.indexOf("Connection: Close") != -1) ? true : false;
@@ -199,7 +197,7 @@ class Worker {
 				//JOptionPane.showMessageDialog(null, iter.next());
 				String mail = iter.next();
 				this.descriptor.addMail(mail);
-				System.out.println("MAIL: " + mail);
+				Log.console("MAIL: " + mail);
 			}
 			//---------------------------------------------------------------------------------------------------------------------//
 
@@ -215,7 +213,7 @@ class Worker {
 					fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
 					fw.close();
 				} catch (IOException e) {
-					System.err.println("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
+					Log.error("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
 				}
 			}
 
@@ -237,12 +235,12 @@ class Worker {
 						url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
 					} catch (URISyntaxException e) {
 						error = true;
-						System.err.println("No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
+						Log.error("No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
 					}
 				} catch (MalformedURLException e) {
 					//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
 					error = true;
-					System.err.println("Error inesperado en url");
+					Log.error("Error inesperado en url");
 				}
 
 
@@ -252,16 +250,16 @@ class Worker {
 						this.descriptor.addLink(link); //como es un hash si existe no lo agrega
 
 						this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
-						System.out.println("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.host + this.path + " AGREGO: " + link);
+						Log.console("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.host + this.path + " AGREGO: " + link);
 					}
 				}
 
 
 			}
 
-			if (this.descriptor.usesDebug()) {
-				System.out.println("[debug] Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
-			}
+
+			Log.debug("Url:" + urlAProcesar.getUrl() + " Status Code " + statusCode);
+
 
 			//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
 			//Si no tiene este tag, esta en uno solo
@@ -273,7 +271,7 @@ class Worker {
 					fw.close();
 				}
 				catch (IOException e){
-					System.err.println("No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
+					Log.error("No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
 				}
 
 			}
@@ -287,7 +285,7 @@ class Worker {
 					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
 				}
 			} else {
-				System.err.println("Error: se recibio status code " + statusCode);
+				Log.error("Error: se recibio status code " + statusCode);
 			}
 		}
 		//text/html

@@ -15,7 +15,6 @@ public class Descriptor {
 	private HashMap<String, String> links = null;
 	private List<String> mails = null;
 	private List<Pair<Integer, String>> aProcesar = null;	
-	private boolean usesDebug = false;
 	private boolean usesPozos = false;
 	private String filePozos = null;
 	private boolean usesMultilang = false;
@@ -124,14 +123,6 @@ public class Descriptor {
 
 	public List<Pair<Integer, String>> getAProcesar(){
 		return this.aProcesar;
-	}
-
-	public boolean usesDebug(){
-		return this.usesDebug;
-	}
-
-	public void setDebug(){
-		this.usesDebug = true;
 	}
 
 	public boolean getPozo(){
