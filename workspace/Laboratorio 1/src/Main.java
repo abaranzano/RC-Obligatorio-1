@@ -33,8 +33,13 @@ public class Main {
 			parser  = new BasicParser();  
 			cmdLine = parser.parse(options, args);             
 			if (cmdLine.getArgs().length != 0) {
-				descriptor.addLink(cmdLine.getArgs()[0]); //Agrego como procesada, ya que la primera la proceso siempre.
-				descriptor.agregarURL(0, cmdLine.getArgs()[0]);
+				String urlinicial = cmdLine.getArgs()[0];			
+				if (!urlinicial.startsWith("http://") && !urlinicial.startsWith("ftp://") && !urlinicial.startsWith("https://")) {
+					//Verifico que tenga protocolo. Si no lo tiene le agrego por defecto http.
+					urlinicial = "http://" + urlinicial;
+				}
+				descriptor.addLink(urlinicial); //Agrego como procesada, ya que la primera la proceso siempre.
+				descriptor.agregarURL(0, urlinicial);
 			} else {
 				Log.error("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
 			}
