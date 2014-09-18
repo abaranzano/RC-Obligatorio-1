@@ -44,7 +44,7 @@ class Worker {
 				this.path = urlAProcesar.getUrl();
 			} else {
 				url = new URL(urlAProcesar.getUrl());
-				this.path = (url.getPath() != null) ? url.getPath() : "/";
+				this.path = (url.getPath() != null && !"".equalsIgnoreCase(url.getPath()) && !" ".equalsIgnoreCase(url.getPath())) ? url.getPath() : "/";
 			}
 
 			this.host = url.getHost();		
