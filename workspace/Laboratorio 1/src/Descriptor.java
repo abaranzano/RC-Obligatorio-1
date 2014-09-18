@@ -178,7 +178,7 @@ public class Descriptor {
 	}
 
 	public synchronized Socket getConnection(String host, int port, boolean keepAlive) throws IOException {
-		return connectionManager.getConnection(host, port, keepAlive, this.usesProxy);
+		return connectionManager.getConnection(host, port, keepAlive);
 	}
 
 	public synchronized void connectionClose(Socket conn, boolean keepAlive) throws IOException {

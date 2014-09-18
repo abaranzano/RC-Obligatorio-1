@@ -14,24 +14,22 @@ public class ConnectionManager {
 		cachedConnections = new HashMap<String, Socket>();
 	}
 
-	public Socket getConnection(String host, int port, boolean keepAlive, boolean usesProxy) throws IOException {
+	public Socket getConnection(String host, int port, boolean keepAlive) throws IOException {
 		Socket conn = null; 
 		if (!keepAlive) {
-			conn = createNewConnection(host, port, usesProxy);
+			conn = createNewConnection(host, port);
 		} else {
-			conn = getConnectionFromCache(host, port, usesProxy); 
+			conn = getConnectionFromCache(host, port); 
 		}
 		return conn;
 	}
 
-	private Socket createNewConnection(String host, int port, boolean usesProxy) throws IOException {
+	private Socket createNewConnection(String host, int port) throws IOException {
 		Socket socket = null;
 		try {
-			if (!usesProxy) {
-				socket = new Socket(host, port);
-			} else {
-				socket = new Socket(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(host, port)));
-			}
+
+			socket = new Socket(host, port);
+
 			Log.debug("Abro la conexion al host:[" + host + "] puerto:[" + port + "].");
 		} catch (UnknownHostException e) {
 			Log.error("Error. No se reconoce el Host:[" + host + "].");
@@ -41,10 +39,10 @@ public class ConnectionManager {
 		return socket;
 	}
 
-	public Socket getConnectionFromCache(String hostName, int port, boolean usesProxy) throws IOException {
+	public Socket getConnectionFromCache(String hostName, int port) throws IOException {
 		Socket conn = cachedConnections.remove(hostName + ":" + port); 
 		if (conn == null || !conn.isConnected() || conn.isClosed()) { 
-			conn = createNewConnection(hostName, port, usesProxy); 
+			conn = createNewConnection(hostName, port); 
 		} 
 		return conn; 
 	}
