@@ -109,7 +109,7 @@ class Worker {
 		BufferedReader in = new BufferedReader(
 				new InputStreamReader(socket.getInputStream()));
 
-		String line;
+		String line;	
 
 		//String response = new String();
 		String response = "";	//con null, lo toma como string y lo concatena al principio
@@ -137,7 +137,9 @@ class Worker {
 			//System.out.println(line);
 		}	
 
-
+		if(response.contains("")){
+			
+		}
 
 
 		if(!this.descriptor.isPersistent()){	//Es HTTP 1.0. El socket se cierra y el Buffer termina con null. Puede leerse sin problemas
@@ -184,12 +186,22 @@ class Worker {
 				}	
 
 			}	//Chunked
+			else{
+				if(response.contains("Content-Length")) {
+					line = in.readLine();
+					while (line != null) { 
+						response += line + "\n";
+						line = in.readLine();
+					}
+				}	//Viene con Content-Length
+			}	//No es chunked
 
 		}	//Es persistent
 
 
 		return response;
 	}
+
 
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
 			Pattern.compile("[-\\w\\.]+@[\\.\\w]+\\.\\w+", Pattern.CASE_INSENSITIVE);
