@@ -133,14 +133,8 @@ class Worker {
 		while (line != null && line.length() != 0) { 
 			response += line + "\n";
 			line = in.readLine();
-			//			System.out.println(line);
-			//System.out.println(line);
+
 		}	
-
-		if(response.contains("")){
-			
-		}
-
 
 		if(!this.descriptor.isPersistent()){	//Es HTTP 1.0. El socket se cierra y el Buffer termina con null. Puede leerse sin problemas
 
@@ -149,13 +143,21 @@ class Worker {
 				response += line + "\n";
 				//Escribimos en el archivo con el metodo write
 				line = in.readLine();
-				//			System.out.println(line);
-				//System.out.println(line);
 			}		
 
 		}
 		else {	//Es persistent. Puede pasar que venga el conente-length y leemeos hasta ahi, o Transfer Encodign: chunked y leemos de a partes
 			if(response.contains("Transfer-Encoding: chunked")){
+				
+				String charset;
+				if(response.contains("charset")){
+					String [] aux = response.substring(response.indexOf("charset") + 8).split("\n"); 
+					charset = aux [0];
+				}
+				else{	//Si no viene el charset, por defect se asume UTF-8
+					charset = "UTF-8";
+				}
+				
 
 				line = in.readLine();	//bytes del primer chunk
 				int bytesChunk = Integer.parseInt(line, 16);
@@ -165,19 +167,15 @@ class Worker {
 					while(bytesLeidos < bytesChunk){
 						byte[] b = in.readLine().getBytes();
 						bytesLeidos++;
-						line = new String (b, "UTF-8");
+						line = new String (b, charset);
 						response += line + "\n";
 						int bytesLinea = b.length;
 						if (bytesLinea != 0){
 							bytesLeidos += b.length;
 						}
-						//System.out.println(line);
-						//System.out.println("Bytes Linea " + bytesLinea);
-						//System.out.println();
-						//escribir.write(line + "\n");
 					}
 					byte[] b = in.readLine().getBytes();
-					line = new String (b, "UTF-8");
+					line = new String (b, charset);
 					if (line.isEmpty())
 						salir = true;
 					else
