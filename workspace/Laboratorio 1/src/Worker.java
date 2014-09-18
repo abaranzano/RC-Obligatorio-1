@@ -356,7 +356,20 @@ class Worker {
 		}
 		if (link.startsWith("/")) {
 			//No tiene nada. Es de la forma /index.php. Agrego el host que es en la misma pagina.
-			link = this.host + link; //ya tiene path, concateno el host					
+			if (this.descriptor.isUsesProxy()) {
+				URL url = null;
+				try {
+					url = new URL(this.urlAProcesar.getUrl());
+				} catch (MalformedURLException e) {
+					//No debería entrar nunca acá, esta URL ya se proceso, lo pido solo para tomar el host de la URL de nuevo para formar la siguiente.
+					Log.error("Error inesperado. Error original: " + e.getMessage());
+				}
+				link = (url.getPort() != -1) ? url.getHost() + ":" + url.getPort() + link : url.getHost() + link;;				
+			} else {
+				//Siempre va a estar por defeco en 80.
+				link = (this.port != 80) ? this.host + ":" + this.port + link : this.host + link; //ya tiene path, concateno el host	
+			}
+							
 		}
 
 		if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
