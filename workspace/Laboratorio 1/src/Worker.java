@@ -379,8 +379,15 @@ class Worker {
 				|| link.contains(".ceo") || link.contains(".education") || link.contains(".email") || link.contains(".holdings")
 				|| link.contains(".info") || link.contains(".international") || link.contains(".link") || link.contains(".museum")
 				|| link.contains(".photos") || link.contains(".properties") || link.contains(".social") || link.contains(".wiki"));
+		//Quiero chequear bien esto, podría machear con cosas estilo .php si tengo ".ph"
+//				|| link.contains(".ar") || link.contains(".au") || link.contains(".br") || link.contains(".bo") || link.contains(".cl") //A partir de acá son todos de paises. Existen paginas de la forma www.montevideo.uy
+//				|| link.contains(".co") || link.contains(".cr") || link.contains(".cu") || link.contains(".de") || link.contains(".ec")
+//				|| link.contains(".es") || link.contains(".eu") || link.contains(".fr") || link.contains(".in") || link.contains(".it")
+//				|| link.contains(".mx") || link.contains(".nl") || link.contains(".pe") || link.contains(".pt")
+//				|| link.contains(".py") || link.contains(".sw") || link.contains(".uk") || link.contains(".us") || link.contains(".uy")
+//				|| link.contains(".ve"));
 	}
-	
+
 	private String armarLink (String link) {
 
 		if(link.contains("#")){
@@ -401,21 +408,17 @@ class Worker {
 		}
 		if (link.startsWith("/")) {
 			//No tiene nada. Es de la forma /index.php. Agrego el host que es en la misma pagina.
-			if (this.descriptor.isUsesProxy()) {
-				URL url = null;
-				try {
-					url = new URL(this.urlAProcesar.getUrl());
-				} catch (MalformedURLException e) {
-					//No debería entrar nunca acá, esta URL ya se proceso, lo pido solo para tomar el host de la URL de nuevo para formar la siguiente.
-					Log.error("Error inesperado al armar la URL a procesar. Error original: " + e.getMessage());
-				}
-				String subPath = (!"".equalsIgnoreCase(url.getPath())) ?  url.getPath().substring(0, url.getPath().lastIndexOf("/")) : "" ;
-				link = (url.getPort() != -1) ? url.getHost() + ":" + url.getPort() + subPath + link : url.getHost() + subPath + link;
-				
-			} else {
-				//Siempre va a estar por defeco en 80.
-				link = (this.port != 80) ? this.host + ":" + this.port + link : this.host + link; //ya tiene path, concateno el host	
+
+			URL url = null;
+			try {
+				url = new URL(this.urlAProcesar.getUrl());
+			} catch (MalformedURLException e) {
+				//No debería entrar nunca acá, esta URL ya se proceso, lo pido solo para tomar el host de la URL de nuevo para formar la siguiente.
+				Log.error("Error inesperado al armar la URL a procesar. Error original: " + e.getMessage());
 			}
+			String subPath = (!"".equalsIgnoreCase(url.getPath())) ?  url.getPath().substring(0, url.getPath().lastIndexOf("/")) : "" ;
+			link = (url.getPort() != -1) ? url.getHost() + ":" + url.getPort() + subPath + link : url.getHost() + subPath + link;
+
 
 		}
 
