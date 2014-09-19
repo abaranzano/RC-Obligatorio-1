@@ -409,7 +409,9 @@ class Worker {
 					//No debería entrar nunca acá, esta URL ya se proceso, lo pido solo para tomar el host de la URL de nuevo para formar la siguiente.
 					Log.error("Error inesperado al armar la URL a procesar. Error original: " + e.getMessage());
 				}
-				link = (url.getPort() != -1) ? url.getHost() + ":" + url.getPort() + link : url.getHost() + link;;				
+				String subPath = (!"".equalsIgnoreCase(url.getPath())) ?  url.getPath().substring(0, url.getPath().lastIndexOf("/")) : "" ;
+				link = (url.getPort() != -1) ? url.getHost() + ":" + url.getPort() + subPath + link : url.getHost() + subPath + link;
+				
 			} else {
 				//Siempre va a estar por defeco en 80.
 				link = (this.port != 80) ? this.host + ":" + this.port + link : this.host + link; //ya tiene path, concateno el host	
