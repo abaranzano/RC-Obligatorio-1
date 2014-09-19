@@ -205,7 +205,7 @@ class Worker {
 
 
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
-			Pattern.compile("[\\w\\.]+(@|\\s*at\\s*)[\\.\\w]+\\.[a-z]{2,6}", Pattern.CASE_INSENSITIVE);
+			Pattern.compile("[\\w\\.]+(?:@|\\s*at\\s*)[\\.\\w]+\\.[a-z]{2,6}", Pattern.CASE_INSENSITIVE);
 
 	List<String> getEmails(String TextHTML) {
 
@@ -374,6 +374,17 @@ class Worker {
 
 
 	public static final Pattern IPAddress = Pattern.compile("\\b(?:(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b");
+	private boolean checkTopLevelDomains(String link) {
+		//Chequeo los Top Level Domains mas comunes
+		return (link.contains(".com") || link.contains(".org") || link.contains(".net") 
+				|| link.contains(".int") || link.contains(".edu") || link.contains(".gov") 
+				|| link.contains(".mil") || link.contains(".academy") || link.contains(".aero") || link.contains(".agency")
+				|| link.contains(".bar") || link.contains(".bargains") || link.contains(".bike") || link.contains(".biz")
+				|| link.contains(".ceo") || link.contains(".education") || link.contains(".email") || link.contains(".holdings")
+				|| link.contains(".info") || link.contains(".international") || link.contains(".link") || link.contains(".museum")
+				|| link.contains(".photos") || link.contains(".properties") || link.contains(".social") || link.contains(".wiki"));
+	}
+	
 	private String armarLink (String link) {
 
 		if(link.contains("#")){
@@ -386,7 +397,7 @@ class Worker {
 			link = link.substring(2);
 		}
 
-		if (!(link.contains("www") || link.contains(".com") || link.contains(".org") || link.contains(".edu") || link.contains(".net") || IPAddress.matcher(link).find()))  {
+		if (!( checkTopLevelDomains(link) || IPAddress.matcher(link).find()))  {
 			//No tiene nada. Es de la forma index.php
 			if (!link.startsWith("/")) {
 				link = "/" + link;
