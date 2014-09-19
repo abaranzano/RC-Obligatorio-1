@@ -8,17 +8,20 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class Worker { 
-
 	private String host = null;
 	private Pair<Integer,String> urlAProcesar;
 	//	private boolean persist = false;
@@ -80,7 +83,7 @@ class Worker {
 
 		BufferedWriter out = new BufferedWriter(
 				new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
-		
+
 		String httpGet = "GET " + this.path;
 		if (this.descriptor.isPersistent()) {
 			httpGet += " HTTP/1.1";
@@ -95,7 +98,7 @@ class Worker {
 
 		out.write(httpGet);
 		out.flush();
-		
+
 		//		out.println(httpGet);
 		Log.debug("Se envio el siguiente mensaje: \n" + 
 				httpGet + "\n" + "Fin del mensaje");
@@ -148,7 +151,7 @@ class Worker {
 		}
 		else {	//Es persistent. Puede pasar que venga el conente-length y leemeos hasta ahi, o Transfer Encodign: chunked y leemos de a partes
 			if(response.contains("Transfer-Encoding: chunked")){
-				
+
 				String charset;
 				if(response.contains("charset")){
 					String [] aux = response.substring(response.indexOf("charset") + 8).split("\n"); 
@@ -157,7 +160,7 @@ class Worker {
 				else{	//Si no viene el charset, por defect se asume UTF-8
 					charset = "UTF-8";
 				}
-				
+
 
 				line = in.readLine();	//bytes del primer chunk
 				int bytesChunk = Integer.parseInt(line, 16);
@@ -202,7 +205,8 @@ class Worker {
 
 
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
-			Pattern.compile("[-\\w\\.]+@[\\.\\w]+\\.\\w+", Pattern.CASE_INSENSITIVE);
+			Pattern.compile("[\\w\\.]+(@|\\s*at\\s*)[\\.\\w]+\\.[a-z]{2,6}", Pattern.CASE_INSENSITIVE);
+
 	List<String> getEmails(String TextHTML) {
 
 		Pattern p = VALID_EMAIL_ADDRESS_REGEX;
@@ -224,7 +228,9 @@ class Worker {
 		}
 
 		connectionClosed = (response.indexOf("Connection: Close") != -1) ? true : false;
-		Log.debug("La conexion con Host:[" + this.host + "] Port:[" + this.port + "] se cerrará a pedido del Servidor (Connection: close encontrado en el Header)");
+		if (connectionClosed) {
+			Log.debug("La conexion con Host:[" + this.host + "] Port:[" + this.port + "] se cerrará a pedido del Servidor (Connection: close encontrado en el Header)");
+		}
 		//		int indiceContentType = 0; //donde arranca el content type
 		//		indiceContentType = response.indexOf("Content-Type");
 		//obtengo el content type, proceso solo si es un html
@@ -265,10 +271,11 @@ class Worker {
 			for (int i = 0; i < cantLinks; i++) {
 				String link = links.elementAt(i).link;
 
-				link = validarLink(link);
+				link = armarLink(link);
 
-				boolean error = false;
+				//Esto lo hago igual por que tengo que verificar si tiene el path si es wellFormed.
 				URL url = null;
+				boolean error = false;
 				try {
 					url = new URL(link);
 					try {
@@ -280,12 +287,12 @@ class Worker {
 						url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
 					} catch (URISyntaxException e) {
 						error = true;
-						Log.error("No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
+						Log.error("Error al verificar la URL. No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
 					}
 				} catch (MalformedURLException e) {
 					//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
 					error = true;
-					Log.error("Error inesperado en url");
+					Log.error("Error inesperado en url. Error original: " + e.getMessage());
 				}
 
 
@@ -337,7 +344,38 @@ class Worker {
 		//		}
 	}
 
-	private String validarLink (String link) {
+	private boolean wellFormedURL(String link) {
+		URL url = null;
+		boolean isWellFormed = true;
+		try {
+			if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
+				//Verifico que tenga protocolo. Si no lo tiene le agrego por defecto http.
+				link = "http://" + link;
+			}
+			url = new URL(link);
+			try {
+				if (url.getPath() == null || url.getPath().isEmpty() || "".equalsIgnoreCase(url.getPath())) {
+					//No tiene path. Lo agrego.
+					link = link + "/";
+					url = new URL(link);
+				}
+				url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
+			} catch (URISyntaxException e) {
+				isWellFormed = false;
+				Log.debug("El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "] Se intentará armar el URL");
+			}
+		} catch (MalformedURLException e) {
+			//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
+			isWellFormed = false;
+			Log.debug("Error inesperado en url. Se intentará armar el URL. Error original: " + e.getMessage());
+		}
+		return isWellFormed;
+	}
+
+
+	public static final Pattern IPAddress = Pattern.compile("\\b(?:(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b");
+	private String armarLink (String link) {
+
 		if(link.contains("#")){
 			//No me importan las Reference. Es la misma URL
 			int posNum = link.indexOf("#");
@@ -348,7 +386,7 @@ class Worker {
 			link = link.substring(2);
 		}
 
-		if (!(link.contains("www") || link.contains(".com") || link.contains(".org") || link.contains(".edu") || link.contains(".net")))  {
+		if (!(link.contains("www") || link.contains(".com") || link.contains(".org") || link.contains(".edu") || link.contains(".net") || IPAddress.matcher(link).find()))  {
 			//No tiene nada. Es de la forma index.php
 			if (!link.startsWith("/")) {
 				link = "/" + link;
@@ -362,14 +400,14 @@ class Worker {
 					url = new URL(this.urlAProcesar.getUrl());
 				} catch (MalformedURLException e) {
 					//No debería entrar nunca acá, esta URL ya se proceso, lo pido solo para tomar el host de la URL de nuevo para formar la siguiente.
-					Log.error("Error inesperado. Error original: " + e.getMessage());
+					Log.error("Error inesperado al armar la URL a procesar. Error original: " + e.getMessage());
 				}
 				link = (url.getPort() != -1) ? url.getHost() + ":" + url.getPort() + link : url.getHost() + link;;				
 			} else {
 				//Siempre va a estar por defeco en 80.
 				link = (this.port != 80) ? this.host + ":" + this.port + link : this.host + link; //ya tiene path, concateno el host	
 			}
-							
+
 		}
 
 		if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
