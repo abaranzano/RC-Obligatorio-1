@@ -8,15 +8,11 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -205,7 +201,7 @@ class Worker {
 
 
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
-			Pattern.compile("[\\w\\.]+(?:@|\\s*at\\s*)[\\.\\w]+\\.[a-z]{2,6}", Pattern.CASE_INSENSITIVE);
+			Pattern.compile("[\\w\\.]+(?:@|\\s+at\\s+)[\\.\\w]+\\.[a-z]{2,6}", Pattern.CASE_INSENSITIVE);
 
 	List<String> getEmails(String TextHTML) {
 
