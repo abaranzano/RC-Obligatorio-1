@@ -44,8 +44,8 @@ class Worker {
 			String linkPath = m.group(PARSE_URL_PATH);
 			this.path = (linkPath != null && !"".equalsIgnoreCase(linkPath) && !" ".equalsIgnoreCase(linkPath)) ? linkPath : "/";
 		}
-		
-		
+
+
 		String linkHost = m.group(PARSE_URL_HOST);
 		String linkPort = m.group(PARSE_URL_PORT);
 		this.host = linkHost;	
@@ -58,10 +58,15 @@ class Worker {
 
 	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException { 
 		this.socket = this.descriptor.getConnection(this.id, this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
-		HTTPGet();
-		String response = HTTPResponse();
-		procesarRespuesta(response);
-		this.descriptor.connectionClose(this.id, this.socket, this.descriptor.isPersistent() && !connectionClosed);
+		try {
+			HTTPGet();
+			String response = HTTPResponse();
+			procesarRespuesta(response);		
+		} finally {
+			if (this.socket != null) {
+				this.descriptor.connectionClose(this.id, this.socket, this.descriptor.isPersistent() && !connectionClosed);			
+			}
+		}
 	}
 
 	public void HTTPGet() throws UnsupportedEncodingException, IOException {
@@ -183,23 +188,23 @@ class Worker {
 	}
 
 	List<String> getEmails(String TextHTML) {
-		
+
 		Pattern p = VALID_EMAIL_ADDRESS_REGEX;
 		List<String> emails = new ArrayList<String>();
-		
+
 		Matcher matcher = p.matcher(TextHTML);
-		
+
 		while (matcher.find()) {
 			emails.add(matcher.group());
 		}
-		
+
 		return emails;
 	}
 
 	public void procesarRespuesta(String response) {
 		//Obtengo el codigo de respuesta, si es 200 esta todo bien, sino hacemos algo
 		String statusCode = null;
-		
+
 		try {
 			statusCode = response.substring(9,12);
 		} catch (StringIndexOutOfBoundsException e) {
@@ -207,13 +212,13 @@ class Worker {
 		}
 
 		connectionClosed = (response.indexOf("Connection: Close") != -1) || (response.indexOf("HTTP/1.0") != -1) ? true : false;
-		
-		if (connectionClosed) {
+
+		if (this.descriptor.isPersistent() && connectionClosed) {
 			Log.debug(id, "La conexion con Host:[" + this.host + "] Port:[" + this.port + "] se cerrará a pedido del Servidor (Connection: close encontrado en el Header o contesto en HTTP/1.0)");
 		}
 
 		Log.debug(id, "Procesando Url:[" + urlAProcesar.getUrl() + "] Status Code [" + statusCode + "]");
-		
+
 		if(statusCode.equals("200")) {
 
 			//----------------------OBTENGO LOS EMAILS-----------------------------------------------------------------------------//
@@ -310,37 +315,37 @@ class Worker {
 		//String linkFragment = m.group(PARSE_URL_FRAGMENT); //No se lo agrego. No es necesario.
 		String returnLink = null;
 
-		
+
 		Matcher urlActual = URL.matcher(urlAProcesar.getUrl());
 		urlActual.find();
-		
+
 		returnLink = (linkSchema == null || "".equalsIgnoreCase(linkSchema)) ? "http://" : linkSchema + "//";
-		
+
 		if (linkHost == null || "".equalsIgnoreCase(linkHost)) {
-			
+
 			returnLink += urlActual.group(PARSE_URL_HOST);
 		} else {
 			returnLink += linkHost;
 		}
-		
+
 		if (linkPort == null || "".equalsIgnoreCase(linkPort)) {
 			String puerto = urlActual.group(PARSE_URL_PORT);
 			returnLink += ((puerto == null || "".equalsIgnoreCase(puerto)) ? "" : ":" + puerto);
 		} else {
 			returnLink +=  ":" + linkPort;
 		}
-		
+
 		String subPath = urlActual.group(PARSE_URL_PATH);
 		if (subPath.lastIndexOf("/") != -1) {
-				subPath =  subPath.substring(0,subPath.lastIndexOf("/"));
+			subPath =  subPath.substring(0,subPath.lastIndexOf("/"));
 		}
-		
+
 		if (linkPath == null || "".equalsIgnoreCase(linkPath)) {
 			returnLink += subPath + "/" ;
 		} else {
 			returnLink += (linkPath.startsWith("/")) ? subPath + linkPath : subPath + "/" + linkPath;
 		}
-		
+
 		if (!(linkQuery == null || "".equalsIgnoreCase(linkQuery))) {
 			returnLink += "?" + linkQuery;
 		}
@@ -351,7 +356,7 @@ class Worker {
 	private static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
 			Pattern.compile("[\\w\\.]+(?:@|\\s+at\\s+)[\\.\\w]+\\.[a-z]{2,6}", Pattern.CASE_INSENSITIVE);
 	private static final Pattern URL = Pattern.compile("^((?:[^:/?#]+):)?(?://([^/?#:]*)(?::([^/?#]*))?)?([^?#]*)(?:\\?([^#]*))?(?:#(.*))?");
-//	private static final Pattern URL = Pattern.compile("(http://)(.*)");
+	//	private static final Pattern URL = Pattern.compile("(http://)(.*)");
 	private static final int PARSE_URL_SCHEMA = 1;
 	private static final int PARSE_URL_HOST = 2;
 	private static final int PARSE_URL_PORT = 3;
