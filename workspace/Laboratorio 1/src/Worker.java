@@ -6,10 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,25 +32,25 @@ class Worker {
 
 	public void initWorker(Pair<Integer, String> actual) {
 		this.urlAProcesar = actual;
-		URL url = null;
-		try {
-			//Si usa proxy, la URL entera pasa a ser el Path.
-			if (this.descriptor.getUsesProxy()) {
-				url = new URL(this.descriptor.getProxy());
-				this.path = urlAProcesar.getUrl();
-			} else {
-				url = new URL(urlAProcesar.getUrl());
-				this.path = (url.getPath() != null && !"".equalsIgnoreCase(url.getPath()) && !" ".equalsIgnoreCase(url.getPath())) ? url.getPath() : "/";
-			}
+		Matcher m = null;
 
-			this.host = url.getHost();		
-			this.port = (url.getPort() != -1) ? url.getPort() : 80;
-
-
-		} catch (MalformedURLException e) {
-			//No debería llegar nunca a entrar acá ya que todas las URL que trabajo me aseguro que tengan protocolo, lo controlo por programación defensiva.
-			Log.error("Error. La url a procesar no tiene un protocolo válido. Error Original: " + e.getMessage());
+		//Si usa proxy, la URL entera pasa a ser el Path.
+		if (this.descriptor.getUsesProxy()) {
+			m = URL.matcher(this.descriptor.getProxy());
+			m.matches();
+			this.path = urlAProcesar.getUrl();
+		} else {
+			m = URL.matcher(urlAProcesar.getUrl());
+			m.matches();
+			String linkPath = m.group(PARSE_URL_PATH);
+			this.path = (linkPath != null && !"".equalsIgnoreCase(linkPath) && !" ".equalsIgnoreCase(linkPath)) ? linkPath : "/";
 		}
+		
+		
+		String linkHost = m.group(PARSE_URL_HOST);
+		String linkPort = m.group(PARSE_URL_PORT);
+		this.host = linkHost;	
+		this.port = (linkPort != null || "".equalsIgnoreCase(linkPort)) ? Integer.parseInt(linkPort) : 80;
 	}
 
 	public void setDescriptor(Descriptor descriptor) {
@@ -200,8 +197,7 @@ class Worker {
 	}
 
 
-	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
-			Pattern.compile("[\\w\\.]+(?:@|\\s+at\\s+)[\\.\\w]+\\.[a-z]{2,6}", Pattern.CASE_INSENSITIVE);
+	
 
 	List<String> getEmails(String TextHTML) {
 
@@ -269,42 +265,15 @@ class Worker {
 
 				link = armarLink(link);
 
-				//Esto lo hago igual por que tengo que verificar si tiene el path si es wellFormed.
-				URL url = null;
-				boolean error = false;
-				try {
-					url = new URL(link);
-					try {
-						if (url.getPath() == null || url.getPath().isEmpty() || "".equalsIgnoreCase(url.getPath())) {
-							//No tiene path. Lo agrego.
-							link = link + "/";
-							url = new URL(link);
-						}
-						url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
-					} catch (URISyntaxException e) {
-						error = true;
-						Log.error("Error al verificar la URL. No se pudo generar el URI. El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "]");
-					}
-				} catch (MalformedURLException e) {
-					//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
-					error = true;
-					Log.error("Error inesperado en url. Error original: " + e.getMessage());
-				}
-
-
 				//controlo existencia, si no existe, agrego
-				if (!error) {
-					if(!this.descriptor.getLinks().containsKey(link)) {				
-						this.descriptor.addLink(link); //como es un hash si existe no lo agrega
+				if(!this.descriptor.getLinks().containsKey(link)) {				
+					this.descriptor.addLink(link); //como es un hash si existe no lo agrega
 
-						this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
-						Log.console("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.host + this.path + " AGREGO: " + link);
-					} else {
-						Log.debug("La url:[" + link + "] ya fue procesada. No se agrega a la lista de datos a procesar");
-					}
+					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
+					Log.console("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.urlAProcesar.getUrl() + " AGREGO: " + link);
+				} else {
+					Log.debug("La url:[" + link + "] ya fue procesada. No se agrega a la lista de datos a procesar");
 				}
-
-
 			}
 
 			//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
@@ -340,92 +309,58 @@ class Worker {
 		//		}
 	}
 
-	private boolean wellFormedURL(String link) {
-		URL url = null;
-		boolean isWellFormed = true;
-		try {
-			if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
-				//Verifico que tenga protocolo. Si no lo tiene le agrego por defecto http.
-				link = "http://" + link;
-			}
-			url = new URL(link);
-			try {
-				if (url.getPath() == null || url.getPath().isEmpty() || "".equalsIgnoreCase(url.getPath())) {
-					//No tiene path. Lo agrego.
-					link = link + "/";
-					url = new URL(link);
-				}
-				url.toURI(); //Este metodo genera el URI por el RFC 2396. Si da error, el formato del link es incorrecto.
-			} catch (URISyntaxException e) {
-				isWellFormed = false;
-				Log.debug("El formato no respeta el RFC 2396 es incorrecto. Link:[" + link + "] Se intentará armar el URL");
-			}
-		} catch (MalformedURLException e) {
-			//Solo si no tiene protocolo. No podría pasar por que lo controlo arriba
-			isWellFormed = false;
-			Log.debug("Error inesperado en url. Se intentará armar el URL. Error original: " + e.getMessage());
-		}
-		return isWellFormed;
-	}
-
-
-	public static final Pattern IPAddress = Pattern.compile("\\b(?:(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b");
-	private boolean checkTopLevelDomains(String link) {
-		//Chequeo los Top Level Domains mas comunes
-		return (link.contains(".com") || link.contains(".org") || link.contains(".net") 
-				|| link.contains(".int") || link.contains(".edu") || link.contains(".gov") 
-				|| link.contains(".mil") || link.contains(".academy") || link.contains(".aero") || link.contains(".agency")
-				|| link.contains(".bar") || link.contains(".bargains") || link.contains(".bike") || link.contains(".biz")
-				|| link.contains(".ceo") || link.contains(".education") || link.contains(".email") || link.contains(".holdings")
-				|| link.contains(".info") || link.contains(".international") || link.contains(".link") || link.contains(".museum")
-				|| link.contains(".photos") || link.contains(".properties") || link.contains(".social") || link.contains(".wiki"));
-		//Quiero chequear bien esto, podría machear con cosas estilo .php si tengo ".ph"
-//				|| link.contains(".ar") || link.contains(".au") || link.contains(".br") || link.contains(".bo") || link.contains(".cl") //A partir de acá son todos de paises. Existen paginas de la forma www.montevideo.uy
-//				|| link.contains(".co") || link.contains(".cr") || link.contains(".cu") || link.contains(".de") || link.contains(".ec")
-//				|| link.contains(".es") || link.contains(".eu") || link.contains(".fr") || link.contains(".in") || link.contains(".it")
-//				|| link.contains(".mx") || link.contains(".nl") || link.contains(".pe") || link.contains(".pt")
-//				|| link.contains(".py") || link.contains(".sw") || link.contains(".uk") || link.contains(".us") || link.contains(".uy")
-//				|| link.contains(".ve"));
-	}
-
 	private String armarLink (String link) {
 
-		if(link.contains("#")){
-			//No me importan las Reference. Es la misma URL
-			int posNum = link.indexOf("#");
-			link = link.substring(0, posNum);
+		Matcher m = URL.matcher(link);
+		m.find();
+		String linkSchema = m.group(PARSE_URL_SCHEMA);
+		String linkHost = m.group(PARSE_URL_HOST);
+		String linkPort = m.group(PARSE_URL_PORT);
+		String linkPath = m.group(PARSE_URL_PATH);
+		String linkQuery = m.group(PARSE_URL_QUERY);
+		String linkFragment = m.group(PARSE_URL_FRAGMENT); //No se lo agrego. No es necesario.
+		String returnLink = null;
+
+		returnLink = (linkSchema == null || "".equalsIgnoreCase(linkSchema)) ? "http://" : linkSchema + "//";
+		
+		if (linkHost == null || "".equalsIgnoreCase(linkHost)) {
+			Matcher obtenerHost = URL.matcher(urlAProcesar.getUrl());
+			obtenerHost.find();
+			returnLink += obtenerHost.group(PARSE_URL_HOST);
+		} else {
+			returnLink += linkHost;
 		}
-		if (link.startsWith("//")) {
-			//Wikipedia es una hija de puta. Tiene links de la forma //es.wikipedia.org
-			link = link.substring(2);
+		
+		if (linkPort == null || "".equalsIgnoreCase(linkPort)) {
+			Matcher obtenerPuerto = URL.matcher(urlAProcesar.getUrl());
+			obtenerPuerto.find();
+			String puerto = obtenerPuerto.group(PARSE_URL_PORT);
+			returnLink += ((puerto == null || "".equalsIgnoreCase(puerto)) ? "" : ":" + puerto);
+		} else {
+			returnLink +=  ":" + linkPort;
+		}
+		
+		if (linkPath == null || "".equalsIgnoreCase(linkPath)) {
+			returnLink += "/" ;
+		} else {
+			returnLink += (linkPath.startsWith("/")) ? linkPath : "/" + linkPath;
+		}
+		
+		if (!(linkQuery == null || "".equalsIgnoreCase(linkQuery))) {
+			returnLink += "?" + linkQuery;
 		}
 
-		if (!( checkTopLevelDomains(link) || IPAddress.matcher(link).find()))  {
-			//No tiene nada. Es de la forma index.php
-			if (!link.startsWith("/")) {
-				link = "/" + link;
-			}
-		}
-		if (link.startsWith("/")) {
-			//No tiene nada. Es de la forma /index.php. Agrego el host que es en la misma pagina.
-
-			URL url = null;
-			try {
-				url = new URL(this.urlAProcesar.getUrl());
-			} catch (MalformedURLException e) {
-				//No debería entrar nunca acá, esta URL ya se proceso, lo pido solo para tomar el host de la URL de nuevo para formar la siguiente.
-				Log.error("Error inesperado al armar la URL a procesar. Error original: " + e.getMessage());
-			}
-			String subPath = (!"".equalsIgnoreCase(url.getPath())) ?  url.getPath().substring(0, url.getPath().lastIndexOf("/")) : "" ;
-			link = (url.getPort() != -1) ? url.getHost() + ":" + url.getPort() + subPath + link : url.getHost() + subPath + link;
-
-
-		}
-
-		if (!link.startsWith("http://") && !link.startsWith("ftp://") && !link.startsWith("https://")) {
-			//Verifico que tenga protocolo. Si no lo tiene le agrego por defecto http.
-			link = "http://" + link;
-		}
-		return link;
+		return returnLink;
 	}
+
+	private static final Pattern VALID_EMAIL_ADDRESS_REGEX = 
+			Pattern.compile("[\\w\\.]+(?:@|\\s+at\\s+)[\\.\\w]+\\.[a-z]{2,6}", Pattern.CASE_INSENSITIVE);
+	private static final Pattern URL = Pattern.compile("^((?:[^:/?#]+):)?(?://([^/?#:]*)(?::([^/?#]*))?)?([^?#]*)(?:\\?([^#]*))?(?:#(.*))?");
+//	private static final Pattern URL = Pattern.compile("(http://)(.*)");
+	private static final int PARSE_URL_SCHEMA = 1;
+	private static final int PARSE_URL_HOST = 2;
+	private static final int PARSE_URL_PORT = 3;
+	private static final int PARSE_URL_PATH = 4;
+	private static final int PARSE_URL_QUERY = 5;
+	private static final int PARSE_URL_FRAGMENT = 6;
 } 
