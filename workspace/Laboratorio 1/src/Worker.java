@@ -57,8 +57,8 @@ class Worker {
 	}
 
 	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException { 
-		this.socket = this.descriptor.getConnection(this.id, this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
 		try {
+			this.socket = this.descriptor.getConnection(this.id, this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
 			HTTPGet();
 			String response = HTTPResponse();
 			procesarRespuesta(response);		
