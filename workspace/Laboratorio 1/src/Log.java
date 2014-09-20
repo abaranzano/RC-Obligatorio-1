@@ -1,3 +1,7 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 
 public class Log {
 	private static Log instance = null;
@@ -24,6 +28,17 @@ public class Log {
 	
 	public static void error(String log) {
 		System.err.println(log);
+		File archivo=new File("errors.txt");
+		FileWriter escribir;
+		try {
+			escribir = new FileWriter(archivo,true);
+			escribir.write(log + "\n");
+			//Cerramos la conexion
+			escribir.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	public static void debug(String log) {

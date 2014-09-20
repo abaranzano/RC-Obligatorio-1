@@ -216,7 +216,7 @@ class Worker {
 		try {
 			statusCode = response.substring(9,12);
 		} catch (StringIndexOutOfBoundsException e) {
-			Log.error("Error:" + response + "Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
+			Log.error("Error al procesar respuesta de Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "] \n." + response);
 		}
 
 		connectionClosed = (response.indexOf("Connection: Close") != -1) ? true : false;
@@ -302,7 +302,7 @@ class Worker {
 					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
 				}
 			} else {
-				Log.error("Error. Se recibio status code " + statusCode);
+				Log.error("Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "] Error. Se recibio status code " + statusCode);
 			}
 		}
 		//text/html
@@ -321,29 +321,34 @@ class Worker {
 		String linkFragment = m.group(PARSE_URL_FRAGMENT); //No se lo agrego. No es necesario.
 		String returnLink = null;
 
+		
+		Matcher urlActual = URL.matcher(urlAProcesar.getUrl());
+		urlActual.find();
+		
 		returnLink = (linkSchema == null || "".equalsIgnoreCase(linkSchema)) ? "http://" : linkSchema + "//";
 		
 		if (linkHost == null || "".equalsIgnoreCase(linkHost)) {
-			Matcher obtenerHost = URL.matcher(urlAProcesar.getUrl());
-			obtenerHost.find();
-			returnLink += obtenerHost.group(PARSE_URL_HOST);
+			
+			returnLink += urlActual.group(PARSE_URL_HOST);
 		} else {
 			returnLink += linkHost;
 		}
 		
 		if (linkPort == null || "".equalsIgnoreCase(linkPort)) {
-			Matcher obtenerPuerto = URL.matcher(urlAProcesar.getUrl());
-			obtenerPuerto.find();
-			String puerto = obtenerPuerto.group(PARSE_URL_PORT);
+			String puerto = urlActual.group(PARSE_URL_PORT);
 			returnLink += ((puerto == null || "".equalsIgnoreCase(puerto)) ? "" : ":" + puerto);
 		} else {
 			returnLink +=  ":" + linkPort;
 		}
 		
+		String subPath = urlActual.group(PARSE_URL_PATH);
+		if (subPath.lastIndexOf("/") != -1) {
+				subPath =  subPath.substring(0,subPath.lastIndexOf("/"));
+		}
 		if (linkPath == null || "".equalsIgnoreCase(linkPath)) {
-			returnLink += "/" ;
+			returnLink += subPath + "/" ;
 		} else {
-			returnLink += (linkPath.startsWith("/")) ? linkPath : "/" + linkPath;
+			returnLink += (linkPath.startsWith("/")) ? subPath + linkPath : subPath + "/" + linkPath;
 		}
 		
 		if (!(linkQuery == null || "".equalsIgnoreCase(linkQuery))) {
