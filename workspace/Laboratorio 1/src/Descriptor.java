@@ -177,12 +177,12 @@ public class Descriptor {
 		return this.aProcesar.size();
 	}
 
-	public synchronized Socket getConnection(String host, int port, boolean keepAlive) throws IOException {
-		return connectionManager.getConnection(host, port, keepAlive);
+	public synchronized Socket getConnection(String id, String host, int port, boolean keepAlive) throws IOException {
+		return connectionManager.getConnection(id, host, port, keepAlive);
 	}
 
-	public synchronized void connectionClose(Socket conn, boolean keepAlive) throws IOException {
-		connectionManager.connectionClose(conn, keepAlive);
+	public synchronized void connectionClose(String id, Socket conn, boolean keepAlive) throws IOException {
+		connectionManager.connectionClose(id, conn, keepAlive);
 	}
 
 }

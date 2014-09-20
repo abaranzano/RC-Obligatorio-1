@@ -22,7 +22,7 @@ public class Decorator implements Runnable {
 	@Override
 	public void run() {
 		boolean salir = false;
-		this.worker = new Worker(this.id);
+		this.worker = new Worker(String.valueOf(this.id));
 		worker.setDescriptor(this.descriptor);
 		while (!salir) {
 			this.descriptor.revivo();
@@ -32,9 +32,9 @@ public class Decorator implements Runnable {
 					worker.initWorker(actual);					
 					worker.doJob();
 				} catch (IOException e) {
-					Log.error("Error original: " + e.getMessage());
+					Log.error(String.valueOf(id), "Error original: " + e.getMessage());
 				} catch (TimeoutException e) {
-					Log.error("Error: " + e.getMessage());
+					Log.error(String.valueOf(id), "Error: " + e.getMessage());
 				}
 			} 		
 			this.descriptor.finalizo();

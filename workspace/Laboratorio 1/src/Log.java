@@ -26,13 +26,13 @@ public class Log {
 		return instance;
 	}
 	
-	public static void error(String log) {
-		System.err.println(log);
-		File archivo=new File("errors.txt");
+	public static void error(String threadID, String log) {
+		System.err.println("[error] ThreadID:[" + threadID + "] " + log);
+		File archivo = new File("errors.txt");
 		FileWriter escribir;
 		try {
 			escribir = new FileWriter(archivo,true);
-			escribir.write(log + "\n");
+			escribir.write("[error] ThreadID:[" + threadID + "] " + log + "\n");
 			//Cerramos la conexion
 			escribir.close();
 		} catch (IOException e) {
@@ -41,13 +41,33 @@ public class Log {
 
 	}
 
-	public static void debug(String log) {
+	public static void debug(String threadID, String log) {
 		if (Log.getInstance().verbosity == DEBUG) {
-			System.out.println("[debug] " + log);
+			System.out.println("[debug] ThreadID:[" + threadID + "] " + log);
+		}
+		File archivo = new File("debug.txt");
+		FileWriter escribir;
+		try {
+			escribir = new FileWriter(archivo,true);
+			escribir.write("[debug] ThreadID:[" + threadID + "] " + log + "\n");
+			//Cerramos la conexion
+			escribir.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
-	public static void console(String log) {
-		System.out.println(log);
+	public static void console(String threadID, String log) {
+		System.out.println("[console] ThreadID:[" + threadID + "] " + log);
+		File archivo = new File("console.txt");
+		FileWriter escribir;
+		try {
+			escribir = new FileWriter(archivo,true);
+			escribir.write("[console] ThreadID:[" + threadID + "] " + log + "\n");
+			//Cerramos la conexion
+			escribir.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

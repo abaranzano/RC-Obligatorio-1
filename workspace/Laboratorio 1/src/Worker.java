@@ -17,16 +17,15 @@ import java.util.regex.Pattern;
 class Worker { 
 	private String host = null;
 	private Pair<Integer,String> urlAProcesar;
-	//	private boolean persist = false;
 	private boolean connectionClosed = false; //Cuando el servidor manda un Connection: close. No puedo asumir persistencia
 	private String path = null;
 	private int port;
 	private Socket socket = null;
 	private Descriptor descriptor = null;
-	private long id = 0;
+	private String id = "0";
 
 
-	Worker (long id) {
+	Worker (String id) {
 		this.id = id;
 	}
 
@@ -58,18 +57,11 @@ class Worker {
 	}
 
 	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException { 
-		this.socket = this.descriptor.getConnection(this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
+		this.socket = this.descriptor.getConnection(this.id, this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
 		HTTPGet();
 		String response = HTTPResponse();
-		//creo un archivo que ocntiene el responde de la pag
-		//el archivo queda almacenado en la carpeta Labratorio 1 del proyecto con nombre archivo, el nombre del host procesado
-		File archivo=new File(host + ".txt");
-		FileWriter escribir=new FileWriter(archivo,true);
-		escribir.write(response);
-		//Cerramos la conexion
-		escribir.close();
 		procesarRespuesta(response);
-		this.descriptor.connectionClose(this.socket, this.descriptor.isPersistent() && !connectionClosed);
+		this.descriptor.connectionClose(this.id, this.socket, this.descriptor.isPersistent() && !connectionClosed);
 	}
 
 	public void HTTPGet() throws UnsupportedEncodingException, IOException {
@@ -92,11 +84,8 @@ class Worker {
 		out.write(httpGet);
 		out.flush();
 
-		//		out.println(httpGet);
-		Log.debug("Se envio el siguiente mensaje: \n" + 
-				httpGet + "\n" + "Fin del mensaje");
-
-
+		Log.debug(id, "Se envio el siguiente mensaje: \n" + 
+				httpGet + "\n" + "Fin del mensaje\n");
 
 	}
 
@@ -106,21 +95,19 @@ class Worker {
 				new InputStreamReader(socket.getInputStream()));
 
 		String line;	
-
-		//String response = new String();
-		String response = "";	//con null, lo toma como string y lo concatena al principio
+		String response = "";
 		int timeout = 0;
 		while (!in.ready()) {
 			try {
 				Thread.sleep(1000);
 				timeout++;
-				Log.error("Tiempo esperado:[" + timeout + "] Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
+				Log.console(id, "Tiempo esperado:[" + timeout + "] Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
 				if (timeout > 30) {
 					throw new TimeoutException("Timeout esperando por la respuesta. Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
 				}
 			} catch (InterruptedException e) {
 				//No debería entrar nunca acá, los hilos no los interrumpimos nunca.
-				Log.error("Error inesperado. Error Original: " + e.getMessage());
+				Log.error(id, "Error inesperado. Error Original: " + e.getMessage());
 			}
 		}
 
@@ -137,12 +124,11 @@ class Worker {
 			line = in.readLine();
 			while (line != null) {  //line.length() > 0
 				response += line + "\n";
-				//Escribimos en el archivo con el metodo write
 				line = in.readLine();
 			}		
 
 		}
-		else {	//Es persistent. Puede pasar que venga el conente-length y leemeos hasta ahi, o Transfer Encodign: chunked y leemos de a partes
+		else {	//Es persistent. Puede pasar que venga el Content-Length y leemeos hasta ahi, o Transfer Encoding: chunked y leemos de a partes
 			if(response.contains("Transfer-Encoding: chunked")){
 
 				String charset;
@@ -196,50 +182,46 @@ class Worker {
 		return response;
 	}
 
-
-	
-
 	List<String> getEmails(String TextHTML) {
-
+		
 		Pattern p = VALID_EMAIL_ADDRESS_REGEX;
 		List<String> emails = new ArrayList<String>();
+		
 		Matcher matcher = p.matcher(TextHTML);
+		
 		while (matcher.find()) {
 			emails.add(matcher.group());
 		}
+		
 		return emails;
 	}
 
 	public void procesarRespuesta(String response) {
 		//Obtengo el codigo de respuesta, si es 200 esta todo bien, sino hacemos algo
 		String statusCode = null;
+		
 		try {
 			statusCode = response.substring(9,12);
 		} catch (StringIndexOutOfBoundsException e) {
-			Log.error("Error al procesar respuesta de Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "] \n." + response);
+			Log.error(id, "Error al procesar respuesta de Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "] \n." + response);
 		}
 
-		connectionClosed = (response.indexOf("Connection: Close") != -1) ? true : false;
+		connectionClosed = (response.indexOf("Connection: Close") != -1) || (response.indexOf("HTTP/1.0") != -1) ? true : false;
+		
 		if (connectionClosed) {
-			Log.debug("La conexion con Host:[" + this.host + "] Port:[" + this.port + "] se cerrará a pedido del Servidor (Connection: close encontrado en el Header)");
+			Log.debug(id, "La conexion con Host:[" + this.host + "] Port:[" + this.port + "] se cerrará a pedido del Servidor (Connection: close encontrado en el Header o contesto en HTTP/1.0)");
 		}
-		//		int indiceContentType = 0; //donde arranca el content type
-		//		indiceContentType = response.indexOf("Content-Type");
-		//obtengo el content type, proceso solo si es un html
-		//		String contenttype = response.substring(indiceContentType + 14, indiceContentType + 23);
 
-		//		if(contenttype.equals("text/html")) { 
-
-		Log.debug("Procesando Url:[" + urlAProcesar.getUrl() + "] Status Code [" + statusCode + "]");
+		Log.debug(id, "Procesando Url:[" + urlAProcesar.getUrl() + "] Status Code [" + statusCode + "]");
+		
 		if(statusCode.equals("200")) {
 
 			//----------------------OBTENGO LOS EMAILS-----------------------------------------------------------------------------//
 			Iterator<String> iter = getEmails(response).iterator();
 			while(iter.hasNext()) {
-				//JOptionPane.showMessageDialog(null, iter.next());
 				String mail = iter.next();
 				this.descriptor.addMail(mail);
-				Log.console("MAIL: " + mail);
+				Log.console(id, "Se encontro un mail en URL[: " + this.urlAProcesar.getUrl() + "] MAIL:[" + mail + "]");
 			}
 			//---------------------------------------------------------------------------------------------------------------------//
 
@@ -249,14 +231,14 @@ class Worker {
 
 			int cantLinks = links.size();
 			if (cantLinks == 0 && this.descriptor.getPozo()) {
-				Log.debug("Se encontró un pozo en URL[: " + this.urlAProcesar.getUrl() + "]");
+				Log.debug(id, "Se encontró un pozo en URL[: " + this.urlAProcesar.getUrl() + "]");
 				File archivo = new File(this.descriptor.getFilePozo());	//Pasarle la Ruta relativa dentro del proyecto
 				try {
 					FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
 					fw.write(this.urlAProcesar.getUrl() + "\r\n");  //Precisa los dos para saltar de linea
 					fw.close();
 				} catch (IOException e) {
-					Log.error("No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
+					Log.error(id, "No se pudo escribir el log de Pozos. Error original: " + e.getMessage());
 				}
 			}
 
@@ -270,16 +252,16 @@ class Worker {
 					this.descriptor.addLink(link); //como es un hash si existe no lo agrega
 
 					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
-					Log.console("LINK: " + links.elementAt(i).link + " VIENE DE: " + this.urlAProcesar.getUrl() + " AGREGO: " + link);
+					Log.debug(id, "Se encontró link en:[" + this.urlAProcesar.getUrl() + "] Link:[" + links.elementAt(i).link + "] Valor luego de armarlo:[" + link + "]");
 				} else {
-					Log.debug("La url:[" + link + "] ya fue procesada. No se agrega a la lista de datos a procesar");
+					Log.debug(id, "La url:[" + link + "] ya fue procesada. No se agrega a la lista de datos a procesar");
 				}
 			}
 
-			//Asumo que si viene el tag "Content-language:", l url esta publicada en mas de un lenguaje
+			//Asumo que si viene el tag "Content-language:", la url esta publicada en mas de un lenguaje
 			//Si no tiene este tag, esta en uno solo
 			if(this.descriptor.getMultilang() && response.contains("Content-language")) {	 
-				Log.debug("Se multilenguaje en URL[: " + this.urlAProcesar.getUrl() + "]");
+				Log.debug(id, "Se multilenguaje en URL[: " + this.urlAProcesar.getUrl() + "]");
 				File archivo = new File(this.descriptor.getFileMultilang());	//Pasarle la Ruta relativa dentro del proyecto
 				try{
 					FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
@@ -287,13 +269,13 @@ class Worker {
 					fw.close();
 				}
 				catch (IOException e){
-					Log.error("No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
+					Log.error(id, "No se pudo escribir el log de multilnag. Error original: " + e.getMessage());
 				}
 
 			}
 		} else {	//Status Code <> 200
 			if(statusCode.equals("301") || statusCode.equals("302") || statusCode.equals("303")) {	//Considero link de redireccion
-				Log.debug("Se encontró redireccionamiento en URL:[" + this.urlAProcesar.getUrl() + "] Se procesará mas adelante");
+				Log.debug(id, "Se encontró redireccionamiento en URL:[" + this.urlAProcesar.getUrl() + "] Se procesará mas adelante");
 				int posLocation = response.indexOf("Location");
 				String link = response.substring(posLocation + 10);
 				link = link.split("\n")[0];
@@ -302,7 +284,7 @@ class Worker {
 					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
 				}
 			} else {
-				Log.error("Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "] Error. Se recibio status code " + statusCode);
+				Log.error(id, "Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "] Error. Se recibio status code " + statusCode);
 			}
 		}
 		//text/html
@@ -318,7 +300,7 @@ class Worker {
 		String linkPort = m.group(PARSE_URL_PORT);
 		String linkPath = m.group(PARSE_URL_PATH);
 		String linkQuery = m.group(PARSE_URL_QUERY);
-		String linkFragment = m.group(PARSE_URL_FRAGMENT); //No se lo agrego. No es necesario.
+		//String linkFragment = m.group(PARSE_URL_FRAGMENT); //No se lo agrego. No es necesario.
 		String returnLink = null;
 
 		
@@ -345,6 +327,7 @@ class Worker {
 		if (subPath.lastIndexOf("/") != -1) {
 				subPath =  subPath.substring(0,subPath.lastIndexOf("/"));
 		}
+		
 		if (linkPath == null || "".equalsIgnoreCase(linkPath)) {
 			returnLink += subPath + "/" ;
 		} else {

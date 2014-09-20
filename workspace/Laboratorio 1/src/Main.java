@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -8,6 +11,7 @@ public class Main {
 
 	public static void main(String args[]) throws Exception 
 	{ 
+		init();
 		CommandLineParser parser  = null;  
 		CommandLine       cmdLine = null; 
 		Options options = new Options();
@@ -41,7 +45,7 @@ public class Main {
 				descriptor.addLink(urlinicial); //Agrego como procesada, ya que la primera la proceso siempre.
 				descriptor.agregarURL(0, urlinicial);
 			} else {
-				Log.error("Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
+				Log.error("Main", "Error con la cantidad de argumentos ingresados, se esperaba [1] se encontraron:[" + cmdLine.getArgs().length + "]"); 
 			}
 
 			if(cmdLine.hasOption("d")){
@@ -52,7 +56,7 @@ public class Main {
 				try {
 					descriptor.setProfundidadMaxima(Integer.parseInt(cmdLine.getOptionValue("depth")));
 				} catch (NumberFormatException e) {
-					Log.error("Error en el valor de profundidad. Se utiliza valor por defecto. Error Original: " + e.getMessage());
+					Log.error("Main", "Error en el valor de profundidad. Se utiliza valor por defecto. Error Original: " + e.getMessage());
 				}
 
 			}
@@ -75,7 +79,7 @@ public class Main {
 				try {
 					cantidadHilos = Integer.valueOf(cmdLine.getOptionValue("p"));
 				} catch (NumberFormatException e) {
-					Log.error("Error en el valor de cantidad de hilos. Se utiliza valor por defecto. Error Original: " + e.getMessage());
+					Log.error("Main", "Error en el valor de cantidad de hilos. Se utiliza valor por defecto. Error Original: " + e.getMessage());
 				}
 			}
 			if (cmdLine.hasOption("prx")) {
@@ -89,7 +93,7 @@ public class Main {
 			}
 
 		} catch (org.apache.commons.cli.ParseException ex){  
-			Log.error(ex.getMessage());                  
+			Log.error("Main", ex.getMessage());                  
 		}  
 
 
@@ -98,7 +102,7 @@ public class Main {
 
 		//		while (!salir) {
 
-		Log.debug("Parametros del Descriptor.\n depth:[" + descriptor.getProfundidadMaxima() + "] persistent:[" + descriptor.isPersistent() + 
+		Log.debug("Main", "Parametros del Descriptor.\n depth:[" + descriptor.getProfundidadMaxima() + "] persistent:[" + descriptor.isPersistent() + 
 					"] pozos:[" + descriptor.getPozo() + "|" + descriptor.getFilePozo() + 
 					"] multilang:[" + descriptor.getMultilang() + "] p:[" + descriptor.getCantHilos() + 
 					"] prx:[" + descriptor.getUsesProxy() + "|" + descriptor.getProxy() + "]");
@@ -115,7 +119,7 @@ public class Main {
 				t[i].join();
 			}
 		} catch (InterruptedException e) {
-			Log.error("Error al esperar por el fin de un hilo. Se interrumpio la ejecucion. Error Original: " + e.getMessage());
+			Log.error("Main", "Error al esperar por el fin de un hilo. Se interrumpio la ejecucion. Error Original: " + e.getMessage());
 		}
 		//			if (descriptor.getAProcesar().size() == 0) {
 		//				//Terminaron todos los hilos y no quedan urls por procesar.
@@ -123,6 +127,15 @@ public class Main {
 		//			}
 		//		}
 
+	}
+	
+	public static void init() {
+		File file = new File("errors.txt");
+		file.delete();
+		file = new File("debug.txt");
+		file.delete();
+		file = new File("console.txt");
+		file.delete();
 	}
 
 }
