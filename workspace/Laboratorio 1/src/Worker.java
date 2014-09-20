@@ -61,7 +61,13 @@ class Worker {
 			this.socket = this.descriptor.getConnection(this.id, this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
 			HTTPGet();
 			String response = HTTPResponse();
-			procesarRespuesta(response);		
+			procesarRespuesta(response);	
+		} catch (UnsupportedEncodingException e) {
+			throw e;
+		} catch (IOException e) {
+			throw e;
+		} catch (TimeoutException e) {
+			throw e;
 		} finally {
 			if (this.socket != null) {
 				this.descriptor.connectionClose(this.id, this.socket, this.descriptor.isPersistent() && !connectionClosed);			
