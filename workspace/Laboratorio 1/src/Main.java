@@ -1,5 +1,4 @@
 import java.io.File;
-import java.io.IOException;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -135,6 +134,8 @@ public class Main {
 		file = new File("debug.txt");
 		file.delete();
 		file = new File("console.txt");
+		file.delete();
+		file = new File("mails.txt");
 		file.delete();
 	}
 

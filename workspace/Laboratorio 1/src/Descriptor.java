@@ -12,7 +12,6 @@ public class Descriptor {
 	private String proxy = null;
 	private int profundidadMaxima = -1;
 	private HashMap<String, String> links = null;
-	private List<String> mails = null;
 	private List<Pair<Integer, String>> aProcesar = null;	
 	private boolean usesPozos = false;
 	private String filePozos = null;
@@ -24,7 +23,6 @@ public class Descriptor {
 
 	public Descriptor() {
 		this.links = new HashMap<String,String>();
-		this.mails = new ArrayList<String>();
 		this.aProcesar = new ArrayList<Pair<Integer, String>>();
 		this.connectionManager = new ConnectionManager();
 	}
@@ -45,10 +43,6 @@ public class Descriptor {
 
 	public void addLink(String link) {
 		this.links.put(link, link);
-	}
-
-	public void addMail(String mail) {
-		this.mails.add(mail);
 	}
 
 	public synchronized Pair<Integer, String> getData() {
@@ -110,10 +104,6 @@ public class Descriptor {
 
 	public HashMap<String, String> getLinks(){
 		return this.links;
-	}
-
-	public List<String> getMails(){
-		return this.mails;
 	}
 
 	public List<Pair<Integer, String>> getAProcesar(){

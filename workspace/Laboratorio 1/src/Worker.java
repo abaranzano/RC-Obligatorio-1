@@ -220,8 +220,15 @@ class Worker {
 			Iterator<String> iter = getEmails(response).iterator();
 			while(iter.hasNext()) {
 				String mail = iter.next();
-				this.descriptor.addMail(mail);
 				Log.console(id, "Se encontro un mail en URL[: " + this.urlAProcesar.getUrl() + "] MAIL:[" + mail + "]");
+				File archivo = new File("mails.txt");
+				try {
+					FileWriter fw = new FileWriter(archivo, true);	//true para que haga append
+					fw.write(mail + "\r\n");  //Precisa los dos para saltar de linea
+					fw.close();
+				} catch (IOException e) {
+					Log.error(id, "No se pudo escribir el log mails. Error original: " + e.getMessage());
+				}
 			}
 			//---------------------------------------------------------------------------------------------------------------------//
 
