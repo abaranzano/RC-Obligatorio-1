@@ -56,19 +56,16 @@ class Worker {
 		this.descriptor = descriptor;
 	}
 
-	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException { 
+	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException, HersonFensonException { 
 		try {
 			this.socket = this.descriptor.getConnection(this.id, this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
 			HTTPGet();
 			String response = HTTPResponse();
 			procesarRespuesta(response);	
-		} catch (UnsupportedEncodingException e) {
+		} catch (Exception e) {
 			throw e;
-		} catch (IOException e) {
-			throw e;
-		} catch (TimeoutException e) {
-			throw e;
-		} finally {
+		}
+		finally {
 			if (this.socket != null) {
 				this.descriptor.connectionClose(this.id, this.socket, this.descriptor.isPersistent() && !connectionClosed);			
 			}
@@ -113,7 +110,7 @@ class Worker {
 				Thread.sleep(1000);
 				timeout++;
 				Log.console(id, "Tiempo esperado:[" + timeout + "] Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
-				if (timeout > 30) {
+				if (timeout > 15) {
 					throw new TimeoutException("Timeout esperando por la respuesta. Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "]");
 				}
 			} catch (InterruptedException e) {
@@ -213,7 +210,7 @@ class Worker {
 		try {
 			statusCode = response.substring(9,12);
 		} catch (StringIndexOutOfBoundsException e) {
-			Log.error(id, "Error al procesar respuesta de Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "] \n." + response);
+			Log.error(id, "Error al procesar respuesta de Host:[" + this.host + "] Port:[" + this.port + "] Path:[" + this.path + "] \n." + response + "\n Error Original: " + e.getMessage());
 		}
 
 		connectionClosed = (response.indexOf("Connection: Close") != -1) || (response.indexOf("HTTP/1.0") != -1) ? true : false;

@@ -35,6 +35,8 @@ public class Decorator implements Runnable {
 					Log.error(String.valueOf(id), "Error original: " + e.getMessage());
 				} catch (TimeoutException e) {
 					Log.error(String.valueOf(id), "Error: " + e.getMessage());
+				} catch (Exception e) {
+					Log.error(String.valueOf(id), e.getMessage());
 				}
 			} 		
 			this.descriptor.finalizo();

@@ -167,7 +167,7 @@ public class Descriptor {
 		return this.aProcesar.size();
 	}
 
-	public synchronized Socket getConnection(String id, String host, int port, boolean keepAlive) throws IOException {
+	public synchronized Socket getConnection(String id, String host, int port, boolean keepAlive) throws IOException, HersonFensonException {
 		return connectionManager.getConnection(id, host, port, keepAlive);
 	}
 

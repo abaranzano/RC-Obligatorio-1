@@ -12,7 +12,7 @@ public class ConnectionManager {
 		cachedConnections = new HashMap<String, Socket>();
 	}
 
-	public Socket getConnection(String id, String host, int port, boolean keepAlive) throws IOException {
+	public Socket getConnection(String id, String host, int port, boolean keepAlive) throws IOException, HersonFensonException {
 		Socket conn = null; 
 		if (!keepAlive) {
 			conn = createNewConnection(id, host, port);
@@ -22,22 +22,20 @@ public class ConnectionManager {
 		return conn;
 	}
 
-	private Socket createNewConnection(String id, String host, int port) throws IOException {
+	private Socket createNewConnection(String id, String host, int port) throws IOException, HersonFensonException {
 		Socket socket = null;
 		try {
-
 			socket = new Socket(host, port);
-
 			Log.debug(id,"Abro la conexion al host:[" + host + "] puerto:[" + port + "].");
 		} catch (UnknownHostException e) {
-			Log.error(id,"Error. No se reconoce el Host:[" + host + "].");
+			throw new HersonFensonException("Error. No se reconoce el Host:[" + host + "]. Error original: " + e.getMessage());
 		} catch (IllegalArgumentException e) {
-			Log.error(id,"Error. El puerto:[" + port + "] es inválido.");
+			throw new HersonFensonException("Error. El puerto:[" + port + "] es inválido. Error original: " + e.getMessage());
 		}
 		return socket;
 	}
 
-	public Socket getConnectionFromCache(String id, String hostName, int port) throws IOException {
+	public Socket getConnectionFromCache(String id, String hostName, int port) throws IOException, HersonFensonException {
 		Socket conn = cachedConnections.remove(hostName + ":" + port); 
 		if (conn == null || !conn.isConnected() || conn.isClosed()) { 
 			conn = createNewConnection(id, hostName, port); 
