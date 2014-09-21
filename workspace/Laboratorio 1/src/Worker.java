@@ -72,7 +72,7 @@ class Worker {
 		}
 	}
 
-	public void HTTPGet() throws UnsupportedEncodingException, IOException {
+	private void HTTPGet() throws UnsupportedEncodingException, IOException {
 
 		BufferedWriter out = new BufferedWriter(
 				new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
@@ -97,7 +97,7 @@ class Worker {
 
 	}
 
-	public String HTTPResponse() throws IOException, TimeoutException {
+	private String HTTPResponse() throws IOException, TimeoutException {
 
 		BufferedReader in = new BufferedReader(
 				new InputStreamReader(socket.getInputStream()));
@@ -189,7 +189,7 @@ class Worker {
 		return response;
 	}
 
-	List<String> getEmails(String TextHTML) {
+	private List<String> getEmails(String TextHTML) {
 
 		Pattern p = VALID_EMAIL_ADDRESS_REGEX;
 		List<String> emails = new ArrayList<String>();
@@ -203,7 +203,7 @@ class Worker {
 		return emails;
 	}
 
-	public void procesarRespuesta(String response) {
+	private void procesarRespuesta(String response) {
 		//Obtengo el codigo de respuesta, si es 200 esta todo bien, sino hacemos algo
 		String statusCode = null;
 
