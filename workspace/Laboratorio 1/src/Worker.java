@@ -168,8 +168,7 @@ class Worker {
 			}	//Chunked
 			else{
 				if(response.contains("Content-Length")) {
-					line = in.readLine();
-					while (line != null) { 
+					while (in.ready()) { 
 						response += line + "\n";
 						line = in.readLine();
 					}
