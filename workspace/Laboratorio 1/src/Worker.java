@@ -176,9 +176,9 @@ class Worker {
 			}	//Chunked
 			else{
 				if(response.contains("Content-Length")) {
-					while (in.ready()) { 
-						response += line + "\n";
+					while (in.ready()) {
 						line = in.readLine();
+						response += line + "\n";						
 					}
 				}	//Viene con Content-Length
 			}	//No es chunked
@@ -288,11 +288,11 @@ class Worker {
 
 			}
 		} else {	//Status Code <> 200
-			if(statusCode.equals("301") || statusCode.equals("302") || statusCode.equals("303")) {	//Considero link de redireccion
-				Log.debug(id, "Se encontró redireccionamiento en URL:[" + this.urlAProcesar.getUrl() + "] Se procesará mas adelante");
+			if(statusCode.equals("301") || statusCode.equals("302") || statusCode.equals("303")) {	//Considero link de redireccion				
 				int posLocation = response.indexOf("Location");
 				String link = response.substring(posLocation + 10);
 				link = link.split("\n")[0];
+				Log.debug(id, "Se encontró redireccionamiento en URL:[" + this.urlAProcesar.getUrl() + "] Se procesará mas adelante. Link:[" + link + "].");
 				if(!this.descriptor.getLinks().containsKey(link)) {				
 					this.descriptor.addLink(link); //como es un hash si existe no lo agrega
 					this.descriptor.agregarURL(this.urlAProcesar.getDepth() + 1,  link);
