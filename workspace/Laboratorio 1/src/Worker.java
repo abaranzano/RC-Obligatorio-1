@@ -190,10 +190,13 @@ class Worker {
 			}	//Chunked
 			else{
 				if(response.contains("Content-Length")) {
+					int c;
+					StringBuilder prueba = new StringBuilder();
 					while (in.ready()) {
-						line = in.readLine();
-						response += line + "\n";						
+						c = in.read();
+						prueba.append((char) c);						
 					}
+					response += prueba.toString();
 				}	//Viene con Content-Length
 			}	//No es chunked
 
