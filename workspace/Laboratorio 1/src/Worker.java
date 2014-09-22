@@ -171,7 +171,21 @@ class Worker {
 					else
 						bytesChunk = Integer.parseInt(line, 16);
 
-				}	
+				}
+				
+				//Controlamos que se respete el final del chunkeds. si al final no viene un cero seguido de un /r/n, reportamos un errorS
+				String cero = "";
+				if(in.ready()){
+					cero = in.readLine();
+				}
+				if(in.ready() && cero.equals("0")){
+					in.readLine(); 	//salto de linea
+				}
+				
+				if(in.ready()){
+					this.descriptor.connectionClose(id, this.socket, false);
+					Log.error(id, "Error al procesar url con Transfer encoding chunked");
+				}
 
 			}	//Chunked
 			else{
