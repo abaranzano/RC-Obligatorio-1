@@ -56,7 +56,7 @@ class Worker {
 		this.descriptor = descriptor;
 	}
 
-	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException, HersonFensonException { 
+	public void doJob() throws UnsupportedEncodingException, IOException, TimeoutException, HersonFensonException, Exception { 
 		try {
 			this.socket = this.descriptor.getConnection(this.id, this.host, this.port, this.descriptor.isPersistent() && !connectionClosed);
 			HTTPGet();
